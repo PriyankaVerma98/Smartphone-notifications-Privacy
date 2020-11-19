@@ -1,0 +1,52 @@
+---
+title: "Extracting Random IDs"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+```{r}
+library(qualtRics)
+Sys.getenv("QUALTRICS_BASE_URL")
+url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
+#httr::GET(url = url, httr::add_headers(headers))
+qualtrics_api_credentials(api_key = "pdXzpoky87f33cJAIucnIetUV8JQY9VLTrNevWZC", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
+
+```
+
+```{r}
+readRenviron("~/.Renviron")
+mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE, force_request= TRUE)
+```
+
+Find the dimensions of survey 
+```{r}
+nrow(mysurvey) #no of rows
+ncol(mysurvey)
+length(mysurvey)
+dim(mysurvey) #row, cols
+```
+
+Extracting codes for those who have completed attention check questions!!
+```{r}
+copy <- mysurvey
+ac_done <- mysurvey$Q3.8 == "Translate" & mysurvey$Q5.1_5 == "Somewhat agree" 
+copy$attention_check <- as.data.frame(ac_done)
+```
+
+```{r}
+copy[1:5,]
+```
+
+```{r}
+ac_done <- mysurvey$Q3.8 == "Translate" & mysurvey$Q5.1_5 == "Somewhat agree" 
+#df2.1 <- copy[, c("attention_check", "rand", "StartDate","EndDate", "IPAddress")]
+```
+
+```{r}
+library(grid)
+#install.packages("gridExtra")
+library(gridExtra)
+pdf("RandomID5.pdf",  height = nrow(df2.1), width = 2*ncol(df2.1))
+grid.table(df2.1)
+dev.off()
+```
