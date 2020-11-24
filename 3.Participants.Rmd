@@ -1,0 +1,135 @@
+---
+title: "Partcipants"
+output: Partcipants
+---
+
+
+```{r}
+library(qualtRics)
+library(httr)
+Sys.getenv("QUALTRICS_BASE_URL")
+url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
+qualtrics_api_credentials(api_key = "pdXzpoky87f33cJAIucnIetUV8JQY9VLTrNevWZC", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
+#httr::GET(url = url, httr::add_headers(headers))
+
+```
+```{r}
+readRenviron("~/.Renviron")
+```
+
+```{r}
+library(ggplot2)
+library("dplyr") #includes functions for selecting, filtering, grouping, and arranging data like mutate
+library("magrittr") # required for caoalesce function
+```
+
+```{r}
+mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE)
+```
+
+###Preprocessing
+Filtering out data
+```{r}
+df1 <- mysurvey
+df2 <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
+df2 <- df2[df2$Q2.2 != "Other: (Please specify:)",]
+#df2 filtered for committment ques, Phone OS and attention checks
+```
+
+check duplicate IP Addresses
+```{r}
+sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2$IPAddress)) ,nrow(df2) )
+```
+
+Completion time in seconds
+```{r}
+a <- mean(df2$`Duration (in seconds)`)
+b<- median(df2$`Duration (in seconds)`)
+sprintf("Mean survey completion time: %f min %f sec, Median completion time: %f min %f sec", a/60, a %% 60, b/60, b%%60  )
+```
+
+```{r}
+copy <- df2
+```
+
+###Demographics
+
+##Age
+```{r}
+age <- as.data.frame(2020 - copy$Q11.2)
+sprintf("Age characteristics: Range: %f to %f , Mean: %f, Median: %f",min(age$`2020 - copy$Q11.2`, na.rm = TRUE), max(age$`2020 - copy$Q11.2`, na.rm = TRUE), mean(age$`2020 - copy$Q11.2`, na.rm = TRUE), median(age$`2020 - copy$Q11.2`, na.rm = TRUE))
+rm(age)
+```
+
+##Gender
+```{r}
+table(copy$Q11.3) #frequencies
+prop.table(table(copy$Q11.3)) #proportion
+```
+
+
+##Ethnicity
+
+Sample example of using mutate and coalesce
+```{r}
+data <- data.frame('a' = c('A','B','C','D','E'),
+                 'x' = c(1,2,NA,NA,NA),
+                 'y' = c(NA,NA,3,NA,NA),
+                 'z' = c(NA,NA,NA,4,5))
+data <- data %>% mutate(mycol = coalesce(y,z), .keep= "unused") #mutate adds mycol to data
+#colease chooses first non- NA Value
+# %>% pipes the data from LHS to RHS to perform the function . e.g. F(x) ~~ x %>% F
+# %>% select(a, mycol)  #: keeps only "a" and "mycol"
+```
+```{r}
+print(colnames(data))
+```
+
+```{r}
+copy <- copy %>% mutate(Q11.4_0 = coalesce( Q11.4_0_TEXT, Q11.4_0), .keep= "unused")
+```
+
+```{r}
+copy <- copy %>% mutate(Q11.4 = coalesce(Q11.4_1, Q11.4_2, Q11.4_3, Q11.4_4, Q11.4_5, Q11.4_6, Q11.4_0, Q11.4_8), .keep="unused")
+```
+
+```{r}
+print(copy$Q11.4)
+```
+```{r}
+table(copy$Q11.4) #frequencies
+```
+
+```{r}
+prop.table(table(copy$Q11.4)) #proportion
+```
+```{r}
+ggplot(copy, aes(x = Q11.4)) + geom_bar(fill = "cornflowerblue",color="black") +  labs(x = "No. of negative experiences",  y = "Participants count", title = "Negative Experience Occurence Analysis")
+```
+
+### Profession
+```{r}
+table(copy$Q11.8) #frequencies
+#prop.table(table(copy$Q11.8)) #proportio
+```
+
+### Income
+```{r}
+table(copy$Q11.10) #frequencies
+#prop.table(table(copy$Q11.10)) #proportio
+sprintf( "N= %d , percantage= %f", table(copy$Q11.10),100* prop.table(table(copy$Q11.10))  )
+```
+
+
+```{r}
+image2 <- ggplot(copy, aes(x = Q11.10)) + geom_bar(fill = "cornflowerblue",color="black") + labs(x = "Income brackets",  y = "Participants count", title = "Income Distribution") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 12, angle = 90))
+
+png("image2.png")
+print(image2)
+dev.off()
+
+```
+
+
+
+[Commands Source](https://uc-r.github.io/descriptives_categorical#frequencies)
