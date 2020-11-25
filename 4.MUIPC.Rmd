@@ -1,0 +1,77 @@
+---
+title: "MUIPC score"
+output: html_notebook
+---
+
+### Calculating  the MUIPC score
+
+```{r}
+df_m <- copy[  , c("Q5.1_1","Q5.1_2" ,"Q5.1_3" ,"Q5.1_4" ,"Q5.1_6" ,"Q5.1_7")]
+# "Q5.1_5" is an attention check question
+```
+
+```{r}
+df_m$Q5.1_1 <- factor(df_m$Q5.1_1, levels = c("Strongly disagree", "Disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), 
+	ordered = TRUE)
+df_m$Q5.1_2 <- factor(df_m$Q5.1_2, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), 
+	ordered = TRUE)
+df_m$Q5.1_3 <- factor(df_m$Q5.1_3, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), 
+	ordered = TRUE)
+df_m$Q5.1_4 <- factor(df_m$Q5.1_4, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree","Somewhat agree",  "Agree",  "Strongly agree"), 
+	ordered = TRUE)
+
+df_m$Q5.1_6 <- factor(df_m$Q5.1_6, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree","Agree", "Strongly agree"), 
+	ordered = TRUE)
+df_m$Q5.1_7 <- factor(df_m$Q5.1_7, levels = c("Strongly disagree","Disagree", "Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), 
+	ordered = TRUE)
+```
+
+```{r}
+summary(df_m)
+```
+
+```{r}
+require(dplyr)
+df_m <- df_m %>% mutate_if(is.factor, as.numeric)
+str(df_m)
+```
+
+
+```{r}
+df_m <- df_m %>% mutate(survelScore = rowSums(.[1:3]) )
+df_m <- df_m %>% mutate(intrusionScore = rowSums(.[4:6]) )
+```
+
+### Compare no of negative experience with MUIPC Score
+```{r}
+df_m$Negative_experiences <- copy$Q164
+df_m <- df_m[!is.na(df_m$survelScore), ] # remove rows having NA values marked
+df_m <- df_m[!is.na(df_m$intrusionScore), ] # remove rows having NA values marked
+
+df_m <- df_m[!is.na(df_m$Negative_experiences), ]
+unique(df_m$Negative_experiences)
+```
+
+```{r}
+df_m %>%  group_by(df_m$Negative_experiences) %>% summarise(mean_SurvelScore = mean(survelScore, na.rm = TRUE), median_SurvelScore = median(survelScore, na.rm = TRUE))
+
+df_m %>%  group_by(df_m$Negative_experiences) %>% summarise(mean_intrusionScore = mean(intrusionScore, na.rm = TRUE), median_intrusionScore = median(intrusionScore, na.rm = TRUE))
+```
+
+
+```{r}
+mean(df_m$survelScore)
+median(df_m$survelScore)
+mean(df_m$intrusionScore)
+median(df_m$intrusionScore)
+```
+
+
+
+
+
+
+
+
+
+
