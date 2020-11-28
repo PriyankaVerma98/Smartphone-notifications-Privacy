@@ -1,0 +1,99 @@
+---
+title: "5.Technical Efficacy"
+---
+
+```{r}
+head(copy)
+```
+
+
+```{r}
+df <- copy[ , c("Q10.1_1", "Q10.1_2" , "Q10.1_3", "Q10.1_4", "Q10.1_5" )]
+unique(df$Q10.1_1)
+```
+
+#### Convert to Factors
+```{r}
+df$Q10.1_1 <- factor(df$Q10.1_1, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$Q10.1_2 <- factor(df$Q10.1_2, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$Q10.1_3 <- factor(df$Q10.1_3, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$Q10.1_4 <- factor(df$Q10.1_4, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$Q10.1_5 <- factor(df$Q10.1_5, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+```
+
+
+```{r}
+summary(df)
+```
+
+```{r}
+require(dplyr)
+df <- df %>% mutate_if(is.factor, as.numeric)
+str(df)
+```
+
+```{r}
+df <- df %>% mutate(TechEfficacyScore = rowSums(.[1:5]) )
+```
+
+### Score comparison with Negative Experiences
+```{r}
+df_m <- df
+
+df_m$Negative_experiences <- copy$Q164
+df_m <- df_m[!is.na(df_m$TechEfficacyScore), ] # remove rows having NA values marked
+df_m <- df_m[!is.na(df_m$Negative_experiences), ]
+unique(df_m$Negative_experiences)
+```
+
+
+```{r}
+df_m %>%  group_by(df_m$Negative_experiences) %>% summarise(Mean_TechEfficacyScore = mean(TechEfficacyScore, na.rm = TRUE),  median_TechEfficacyScore = median(TechEfficacyScore, na.rm = TRUE))
+```
+
+```{r}
+flag <- df_m$Negative_experiences!= "0" 
+df_m$negs <- flag
+```
+
+### Summary of score
+```{r}
+range(df_m$TechEfficacyScore)
+sd(df_m$TechEfficacyScore)
+mean(df_m$TechEfficacyScore)
+median(df_m$TechEfficacyScore)
+```
+
+```{r}
+print("SD:")
+apply(df,2,sd, na.rm = TRUE)
+print("Mean")
+apply(df,2,mean,na.rm = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

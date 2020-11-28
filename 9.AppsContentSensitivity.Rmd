@@ -1,0 +1,217 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+### Plots to compare different apps notification preferences among family and colleagues
+```{r}
+require(dplyr)
+require(ggplot2)
+library(gridExtra)  
+library(reshape2)
+library(data.table)
+```
+
+#### Instant Messaging comparison 
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_1) & !is.na(df$Q170_1), ]
+dfz <- dfz[(dfz$Q169_1!= "N/A" & dfz$Q170_1!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_1!= "NA" & dfz$Q170_1 != "NA"), ]
+setnames(dfz, old = c("Q169_1", "Q170_1"), new = c('Family','Colleague'))
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+
+
+
+
+
+#### Social Media
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_2) & !is.na(df$Q170_2), ]
+dfz <- dfz[(dfz$Q169_2!= "N/A" & dfz$Q170_2!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_2!= "NA" & dfz$Q170_2 != "NA"), ]
+setnames(dfz, old = c("Q169_2", "Q170_2"), new = c('Family','Colleague'))
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+#### Calendar
+```{r}
+# modify
+dfz <- df[!is.na(df$Q169_3) & !is.na(df$Q170_3), ]
+dfz <- dfz[(dfz$Q169_3!= "N/A" & dfz$Q170_3!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_3!= "NA" & dfz$Q170_3 != "NA"), ]
+setnames(dfz, old = c("Q169_3", "Q170_3"), new = c('Family','Colleague'))
+
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+# modify
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+#### E-mail
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_4) & !is.na(df$Q170_4), ]
+dfz <- dfz[(dfz$Q169_4!= "N/A" & dfz$Q170_4!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_4!= "NA" & dfz$Q170_4 != "NA"), ]
+setnames(dfz, old = c("Q169_4", "Q170_4"), new = c('Family','Colleague'))
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+# unique(count$value)
+# count <- count[count$value != NA, ]
+
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+#### Banking and Payments
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_5) & !is.na(df$Q170_5), ]
+dfz <- dfz[(dfz$Q169_5!= "N/A" & dfz$Q170_5!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_5!= "NA" & dfz$Q170_5 != "NA"), ]
+setnames(dfz, old = c("Q169_5", "Q170_5"), new = c('Family','Colleague'))
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+
+
+
+#### Health and Fitness
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_6) & !is.na(df$Q170_6), ]
+dfz <- dfz[(dfz$Q169_6!= "N/A" & dfz$Q170_6!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_6!= "NA" & dfz$Q170_6 != "NA"), ]
+setnames(dfz, old = c("Q169_6", "Q170_6"), new = c('Family','Colleague'))
+
+# same everything below
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+#### Dating
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+df$Negative_experiences <- df2$Q164 
+
+
+# modify
+dfz <- df[!is.na(df$Q169_7) & !is.na(df$Q170_7), ]
+dfz <- dfz[(dfz$Q169_7!= "N/A" & dfz$Q170_7!= "N/A"  ), ]
+dfz <- dfz[(dfz$Q169_7!= "NA" & dfz$Q170_7 != "NA"), ]
+setnames(dfz, old = c("Q169_7", "Q170_7"), new = c('Family','Colleague'))
+
+dfz <- dfz[ , c("Family", "Colleague", "Negative_experiences")]
+t <- nrow(dfz)
+molten <- melt(dfz, na.rm = TRUE, id= "Negative_experiences" ) 
+molten <- molten[, 2:3]
+
+count <- molten %>% count(variable, value)
+count$per <- 100*( count$n / t)
+count$per <- round(count$per, 2)
+setnames(count, old = c("variable"), new = c('key'))
+count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
