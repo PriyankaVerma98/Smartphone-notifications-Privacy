@@ -1,0 +1,129 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(dplyr)
+library(ggplot2)
+library(data.table)
+# head(mysurvey)
+df <- copy[, c("Q2.2", "Q164")]
+head(df)
+str(df)
+```
+
+```{r}
+### to remove NAs first convert to factors!
+df <- df %>% mutate_if(is.factor, as.character)
+# df$Q164 <- as.character(df$Q164)
+df <- df[!is.na(df$Q164) , ]
+df <- df[df$Q164 != "NA" , ]
+
+### convert back to factor for analysis
+df$Q164 <- factor(df$Q164, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered = TRUE))
+df$Q2.2 <- factor(df$Q2.2, levels= c("Android", "iOS (iPhone)"))
+summary(df)
+```
+
+```{r}
+summary(df$Q2.2)
+# unique(df$Q164)
+```
+
+```{r}
+table(df$Q164, df$Q2.2)
+100*prop.table(table(df$Q164, df$Q2.2))
+
+count <- df %>% count(Q164, Q2.2)
+for(i in 1:12){
+  if(i%%2==0){
+      count[i,c("per")] <- 100*(count[i,c("n")] / 35)
+  }
+  else{
+     count[i,c("per")] <- 100*(count[i,c("n")] / 140)
+  }
+}
+count$per <- round(count$per, 2)
+setnames(count, old = c("Q2.2"), new = c('key'))
+
+image <- ggplot(count, aes(Q164, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Negative Experience",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+```
+
+### Perform Test for statistical significance between the groups
+
+#### Kruskal Wallis
+One independent variable with two or more levels. The test is more commonly used when there are three or more levels. For two levels instead of the Kruskal-Wallis test consider using the Mann Whitney U Test.
+```{r}
+result = kruskal.test(Q164 ~ Q2.2,   data = df) 
+print(result)
+
+```
+
+```{r}
+# 
+# install.packages("dplyr" ,dependencies = TRUE) 
+# install.packages(c("Rcpp","tidyverse"))
+# library(tidyverse)
+install.packages("ggpubr") 
+# library(ggpubr)
+# library(rstatix)
+# df %>% group_by(Q164) %>% get_summary_stats(Q2.2, type = "common")
+```
+#### Mann Whitney U Test
+- It is a popular nonparametric (distribution-free) test to compare outcomes between two independent groups.
+- When comparing two independent samples, when the outcome is not normally distributed and the samples are small, a nonparametric test is appropriate. 
+- It is used to see the distribution difference between two independent variables on the basis of an ordinal(categorical variable having intrinsic an order or rank) dependent variable. 
+[Source](https://www.geeksforgeeks.org/mann-whitney-u-test-in-r-programming/?ref=rp)
+
+```{r}
+# res <- wilcox.test(Q164 ~ Q2.2,  data = df, exact = FALSE) 
+```
+
+
+
+
+
+[R Graph resource](https://www.r-graph-gallery.com/index.html)
+
+
+
+### Relation to different smartphone features use
+```{r}
+df <- copy[, c("Q2.2","Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5")]
+df$Q2.2 <- factor(df$Q2.2, levels= c("Android", "iOS (iPhone)"))
+# summary(df)
+df <- df[! is.na(df$Q3.2_1 ), ]
+df <- df[! is.na(df$Q3.2_2 ), ]
+df <- df[! is.na(df$Q3.2_3 ), ]
+df <- df[! is.na(df$Q3.2_4 ), ]
+df <- df[! is.na(df$Q3.2_5 ), ]
+
+
+count <- df %>%  group_by(df$Q2.2) %>% summarise_all(funs(mean))
+
+result2 = kruskal.test(Q3.2_1 ~ Q2.2,   data = df) 
+print(result2)
+
+result2 = kruskal.test(Q3.2_2 ~ Q2.2,   data = df) 
+print(result2)
+
+result2 <- kruskal.test(Q3.2_3 ~ Q2.2,   data = df) 
+print(result2)
+
+result2 <- kruskal.test(Q3.2_4 ~ Q2.2,   data = df) 
+print(result2)
+
+result2 <- kruskal.test(Q3.2_5 ~ Q2.2,   data = df) 
+print(result2)
+
+
+# av <- aov(Q2.2~ Q3.2_1+Q3.2_2 + Q3.2_3+ Q3.2_4+ Q3.2_5  , data = df) 
+# summary(av)
+```
+
+
+
+
+
+

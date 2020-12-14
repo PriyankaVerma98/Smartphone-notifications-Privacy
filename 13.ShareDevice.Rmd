@@ -1,0 +1,92 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+### DEvice sharing Behaviour
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(tidyr)
+library(reshape2)
+```
+
+```{r}
+# head(copy)
+df <- copy[, 52:59]
+head(df)
+```
+
+```{r}
+# str(df)
+summary(df)
+sapply(df, class)
+
+```
+
+```{r}
+df[, 1:8][is.na(df[, 1:8])] <- "N/A"
+df <- df[ df$Q2.9_1!= "N/A" , ]
+df <- df[ df$Q2.9_2!= "N/A" , ]
+df <- df[ df$Q2.9_3!= "N/A" , ]
+df <- df[ df$Q2.9_4!= "N/A" , ]
+df <- df[ df$Q2.9_5!= "N/A" , ]
+df <- df[ df$Q2.9_6!= "N/A" , ]
+df <- df[ df$Q2.9_7!= "N/A" , ]
+df <- df[ df$Q2.9_8!= "N/A" , ]
+
+
+df[] <- lapply(df, factor, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day")) 
+
+c <- as.data.frame( sapply(X = df, FUN = table))
+t <- sum(c$Q2.9_3)
+t
+c[, 1:8]<- 100 *( c[, 1:8]/t)
+c <- round(c, 2)
+```
+
+```{r}
+print(row.names(c))
+
+c<- tibble::rownames_to_column(c, "Scale")
+
+setnames(c, old = c("Q2.9_1",  "Q2.9_2", "Q2.9_3","Q2.9_4", "Q2.9_5", "Q2.9_6", "Q2.9_7", "Q2.9_8"), new = c('Home', 'Meetings', "Classes", "Seminars and presentations", "Cafeterias and restaurants", "Social gatherings", "Stores and markets", "Public transport" ))
+
+colnames(c)
+
+c$Scale <- factor(c$Scale, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day"), ordered = TRUE)
+```
+
+```{r}
+## single plots
+ggplot(aes(x= Scale, y= Home), data = c) + geom_bar(fill = "cornflowerblue",color="black",stat = 'identity' , position='dodge' ) +  labs(x = "Scale Points",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = Home ), position = position_dodge(0.9),vjust = 1.5)
+
+```
+
+
+```{r}
+d <- melt(c, id.vars="Scale")
+
+# Everything on the same plot
+# ggplot(d, aes(Scale,value, col=variable)) + geom_point() + stat_smooth() 
+
+img <- ggplot(d,  aes(Scale,value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +  
+  labs( x= "Scale",  y = "Percentage of Participants") + 
+  theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
+        axis.title=element_text(size=14,face="bold")) + 
+  geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+   
+
+png("device.png", 1050, 900)
+
+plot(img)
+dev.off()
+
+# Separate plots
+# ggplot(d, aes(Scale,value)) + 
+#   geom_point() + 
+#   stat_smooth() +
+#   facet_wrap(~variable)
+```

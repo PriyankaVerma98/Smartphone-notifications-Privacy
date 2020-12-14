@@ -31,17 +31,17 @@ mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE)
 Filtering out data
 ```{r}
 df1 <- mysurvey
-df2 <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
-df2 <- df2[df2$Q2.2 != "Other: (Please specify:)",]
+df2x <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
+df2x <- df2x[df2x$Q2.2 != "Other: (Please specify:)",]
 #df2 filtered for committment ques, Phone OS and attention checks
 ```
 
 check duplicate IP Addresses
 ```{r}
-sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2$IPAddress)) ,nrow(df2) )
+sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2x$IPAddress)) ,nrow(df2x) )
 ```
 
-Completion time in seconds
+#### Completion time in seconds
 ```{r}
 a <- mean(df2$`Duration (in seconds)`)
 b<- median(df2$`Duration (in seconds)`)
@@ -54,7 +54,7 @@ copy <- df2
 
 ###Demographics
 
-##Age
+####Age
 ```{r}
 age <- as.data.frame(2020 - copy$Q11.2)
 sprintf("Age characteristics: Range: %f to %f , Mean: %f, Median: %f",min(age$`2020 - copy$Q11.2`, na.rm = TRUE), max(age$`2020 - copy$Q11.2`, na.rm = TRUE), mean(age$`2020 - copy$Q11.2`, na.rm = TRUE), median(age$`2020 - copy$Q11.2`, na.rm = TRUE))
@@ -70,7 +70,7 @@ prop.table(table(copy$Q11.3)) #proportion
 
 ##Ethnicity
 
-Sample example of using mutate and coalesce
+#####Sample example of using mutate and coalesce
 ```{r}
 data <- data.frame('a' = c('A','B','C','D','E'),
                  'x' = c(1,2,NA,NA,NA),
@@ -85,6 +85,7 @@ data <- data %>% mutate(mycol = coalesce(y,z), .keep= "unused") #mutate adds myc
 print(colnames(data))
 ```
 
+###find ethnicity
 ```{r}
 copy <- copy %>% mutate(Q11.4_0 = coalesce( Q11.4_0_TEXT, Q11.4_0), .keep= "unused")
 ```
@@ -101,7 +102,7 @@ table(copy$Q11.4) #frequencies
 ```
 
 ```{r}
-prop.table(table(copy$Q11.4)) #proportion
+100*prop.table(table(copy$Q11.4)) #proportion
 ```
 ```{r}
 ggplot(copy, aes(x = Q11.4)) + geom_bar(fill = "cornflowerblue",color="black") +  labs(x = "No. of negative experiences",  y = "Participants count", title = "Negative Experience Occurence Analysis")
@@ -123,7 +124,7 @@ sprintf( "N= %d , percantage= %f", table(copy$Q11.10),100* prop.table(table(copy
 
 ```{r}
 image2 <- ggplot(copy, aes(x = Q11.10)) + geom_bar(fill = "cornflowerblue",color="black") + labs(x = "Income brackets",  y = "Participants count", title = "Income Distribution") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 12, angle = 90))
-
+plot(image2)
 png("image2.png")
 print(image2)
 dev.off()

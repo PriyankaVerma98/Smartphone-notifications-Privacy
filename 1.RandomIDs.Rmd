@@ -38,15 +38,12 @@ copy[1:5,]
 ```
 
 ```{r}
-ac_done <- mysurvey$Q3.8 == "Translate" & mysurvey$Q5.1_5 == "Somewhat agree" 
-#df2.1 <- copy[, c("attention_check", "rand", "StartDate","EndDate", "IPAddress")]
-```
-
-```{r}
+#ac_done <- mysurvey$Q3.8 == "Translate" & mysurvey$Q5.1_5 == "Somewhat agree" 
+df2.1 <- copy[, c("attention_check", "rand", "StartDate","EndDate", "IPAddress")]
 library(grid)
 #install.packages("gridExtra")
 library(gridExtra)
-pdf("RandomID5.pdf",  height = nrow(df2.1), width = 2*ncol(df2.1))
+pdf("RandomID2.pdf", height = nrow(df2.1),  width = 2*ncol(df2.1))
 grid.table(df2.1)
 dev.off()
 ```

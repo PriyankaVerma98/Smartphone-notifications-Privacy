@@ -5,6 +5,7 @@ output: html_notebook
 
 
 ### Scores for Likert scale for app content sensitivity
+### Qualitative Analysis of Open Ended Questions
 ```{r}
 require(dplyr)
 require(ggplot2)
@@ -88,6 +89,7 @@ df$Q170_7 <- factor(df$Q170_7, levels = c("Completely unconcerned", "Somwhat unc
 ```{r}
 df <- df%>% mutate_if(is.factor, as.numeric)
 summary(df)
+rm(df_m)
 ```
 
 

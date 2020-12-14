@@ -6,31 +6,49 @@ output: html_notebook
 ### Calculating  the MUIPC score
 
 ```{r}
-df_m <- copy[  , c("Q5.1_1","Q5.1_2" ,"Q5.1_3" ,"Q5.1_4" ,"Q5.1_6" ,"Q5.1_7")]
+df_m <- copy[  , c("Q5.1_1","Q5.1_2" ,"Q5.1_3" ,"Q5.1_4" ,"Q5.1_6" ,"Q5.1_7", "Q164")]
 # "Q5.1_5" is an attention check question
 ```
 
 ```{r}
-df_m$Q5.1_1 <- factor(df_m$Q5.1_1, levels = c("Strongly disagree", "Disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), 
-	ordered = TRUE)
-df_m$Q5.1_2 <- factor(df_m$Q5.1_2, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), 
-	ordered = TRUE)
-df_m$Q5.1_3 <- factor(df_m$Q5.1_3, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), 
-	ordered = TRUE)
-df_m$Q5.1_4 <- factor(df_m$Q5.1_4, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree","Somewhat agree",  "Agree",  "Strongly agree"), 
-	ordered = TRUE)
+df_m[, 1:7][is.na(df_m[, 1:7])] <- "N/A"
 
-df_m$Q5.1_6 <- factor(df_m$Q5.1_6, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree","Agree", "Strongly agree"), 
-	ordered = TRUE)
-df_m$Q5.1_7 <- factor(df_m$Q5.1_7, levels = c("Strongly disagree","Disagree", "Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), 
-	ordered = TRUE)
+df_m <- df_m[ df_m$Q5.1_1!= "N/A" , ]
+df_m <- df_m[ df_m$Q5.1_2!= "N/A" , ]
+df_m <- df_m[ df_m$Q5.1_3!= "N/A" , ]
+df_m <- df_m[ df_m$Q5.1_4!= "N/A" , ]
+df_m <- df_m[ df_m$Q5.1_6!= "N/A" , ]
+df_m <- df_m[ df_m$Q5.1_7!= "N/A" , ]
+df_m <- df_m[ df_m$Q164!= "N/A" , ]
+
+
+df_m$Q164 <- as.character(df_m$Q164)
+df_m <- df_m[(df_m$Q164 )!= "N/A", ]
+df_m <- df_m[! is.na(df_m$Q164 ), ]
+unique(df_m$Q164)
+
+# df_m$Q164 <- as.numeric(df_m$Q164)
+
+df_m$Q5.1_1 <- factor(df_m$Q5.1_1, levels = c("Strongly disagree", "Disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df_m$Q5.1_2 <- factor(df_m$Q5.1_2, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df_m$Q5.1_3 <- factor(df_m$Q5.1_3, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df_m$Q5.1_4 <- factor(df_m$Q5.1_4, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree","Somewhat agree",  "Agree",  "Strongly agree"), ordered = TRUE)
+df_m$Q5.1_6 <- factor(df_m$Q5.1_6, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree","Agree", "Strongly agree"), ordered = TRUE)
+df_m$Q5.1_7 <- factor(df_m$Q5.1_7, levels = c("Strongly disagree","Disagree", "Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df_m$Q164 <- factor(df_m$Q164, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE  ))
 ```
 
 ```{r}
 summary(df_m)
+library(ggplot2)
+# df_m <- as.character(df_m$Neg_Exp)
+image3 <- ggplot(df_m, aes(x = Q164)) + geom_bar(fill = "cornflowerblue",color="black") +  labs(x = "No. of negative experiences",  y = "Participants count", title = "Negative Experience Occurence Analysis")
+plot(image3)
 ```
 
 ```{r}
+
+
 require(dplyr)
 df_m <- df_m %>% mutate_if(is.factor, as.numeric)
 str(df_m)
@@ -38,9 +56,68 @@ str(df_m)
 
 
 ```{r}
+
 df_m <- df_m %>% mutate(survelScore = rowSums(.[1:3]) )
 df_m <- df_m %>% mutate(intrusionScore = rowSums(.[4:6]) )
+
+
+df_m %>%  group_by(df_m$Q164) %>% summarise(mean_SurvelScore = mean(survelScore, na.rm = TRUE), median_SurvelScore = median(survelScore, na.rm = TRUE))
+
+df_m %>%  group_by(df_m$Q164) %>% summarise(mean_intrusionScore = mean(intrusionScore, na.rm = TRUE), median_intrusionScore = median(intrusionScore, na.rm = TRUE))
 ```
+
+
+
+
+```{r}
+one.way <- aov(Q164 ~ Q5.1_1+Q5.1_2 + Q5.1_3+ Q5.1_4+ Q5.1_6 + Q5.1_7 , data = df_m)
+summary(one.way)
+
+a1 <- aov(Q164 ~ survelScore, data = df_m)
+summary(a1)
+
+b1 <- aov(Q164 ~ intrusionScore, data = df_m)
+summary(b1)
+
+c1 <- aov(Q164 ~ survelScore + intrusionScore, data= df_m)
+summary(c1)
+
+```
+
+#### correlation
+```{r}
+cmatrix = cor(df_m, method = c("spearman"))
+cpearson_matrix = cor(df_m, method = c("pearson"))
+round(cmatrix,2)
+round(cpearson_matrix, 2)
+```
+
+```{r}
+source("http://www.sthda.com/upload/rquery_cormat.r")
+rquery.cormat(df_m)
+
+
+
+library(reshape2)
+library(data.table)
+# setnames(df_m, old = c("Q5.1_1","Q5.1_2", "Q5.1_3", "Q5.1_4", "Q5.1_6", "Q5.1_7", "Q164"), new = c('Q1','Q2', 'Q3', 'Q4', "Q5", "Q6", "Neg_Exp"))
+
+install.packages("corrplot")
+library(corrplot)
+corrplot(cmatrix)
+corrplot(cpearson_matrix)
+```
+
+
+
+#### Calculate scores
+```{r}
+
+
+
+```
+
+
 
 ### Compare no of negative experience with MUIPC Score
 ```{r}
@@ -52,12 +129,6 @@ df_m <- df_m[!is.na(df_m$Negative_experiences), ]
 unique(df_m$Negative_experiences)
 ```
 
-```{r}
-df_m %>%  group_by(df_m$Negative_experiences) %>% summarise(mean_SurvelScore = mean(survelScore, na.rm = TRUE), median_SurvelScore = median(survelScore, na.rm = TRUE))
-
-df_m %>%  group_by(df_m$Negative_experiences) %>% summarise(mean_intrusionScore = mean(intrusionScore, na.rm = TRUE), median_intrusionScore = median(intrusionScore, na.rm = TRUE))
-```
-
 
 ```{r}
 mean(df_m$survelScore)
@@ -66,7 +137,19 @@ mean(df_m$intrusionScore)
 median(df_m$intrusionScore)
 ```
 
+#### Find out correlation
+```{r}
+df_m$Negative_experiences <- as.character(df_m$Negative_experiences)
+is.character(df_m$Negative_experiences)
+unique(df_m$Negative_experiences)
 
+df_m <- df_m[df_m$Negative_experiences != "NA", ]
+df_m <- df_m[!is.na(df_m$Negative_experiences), ]
+```
+
+```{r}
+rm(df_m)
+```
 
 
 
