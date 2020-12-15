@@ -16,6 +16,7 @@ library(reshape2)
 # head(copy)
 df <- copy[, 52:59]
 head(df)
+
 ```
 
 ```{r}
@@ -38,6 +39,7 @@ df <- df[ df$Q2.9_8!= "N/A" , ]
 
 
 df[] <- lapply(df, factor, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day")) 
+nrow(df)
 
 c <- as.data.frame( sapply(X = df, FUN = table))
 t <- sum(c$Q2.9_3)
@@ -89,4 +91,72 @@ dev.off()
 #   geom_point() + 
 #   stat_smooth() +
 #   facet_wrap(~variable)
+```
+
+```{r}
+df <- copy[, 60:61]
+(df)
+
+df[, 1:2][is.na(df[, 1:2])] <- "N/A"
+df <- df[ df$Q2.9_9_TEXT!= "N/A" , ]
+df <- df[ df$Q2.9_9_TEXT!= "na" , ]
+df <- df[ df$Q2.9_9_TEXT!= "n/a" , ]
+df <- df[ df$Q2.9_9_TEXT!= "none" , ]
+df <- df[ df$Q2.9_9_TEXT!= "None" , ]
+df <- df[ df$Q2.9_9_TEXT!= "Nothing" , ]
+df <- df[ df$Q2.9_9_TEXT!= "nothing" , ]
+df <- df[ df$Q2.9_9_TEXT!= "Nobody" , ]
+
+df[order( df[,1] ),]
+
+dp <-as.data.frame( table(df$Q2.9_9))
+dp
+```
+
+
+
+### How freq do you share your phone 
+```{r}
+df <- copy[62: 68]
+df<- df %>% drop_na()
+df[] <- lapply(df, factor, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A")) 
+
+summary(df)
+```
+
+```{r}
+c <- as.data.frame( sapply(X = df, FUN = table))
+c<- tibble::rownames_to_column(c, "Scale")
+
+c <- c[ c$Scale != "N/A", ]  #remove N/As
+for (i in 2:8) {
+  t <- sum(c[,i])
+  # print(t)
+  c[, i] <- 100 *( c[, i]/t)
+  c[, i] <- round(c[, i], 2)
+}
+
+
+c$Scale <- factor(c$Scale, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A"), ordered = TRUE)
+setnames(c, old = c("Q3.4_1","Q3.4_2", "Q3.4_3", "Q3.4_4", "Q3.4_5", "Q3.4_6", "Q3.4_7"), new = c('Spouse', 'Siblings', "Parents", "Children older than 13", "Friends", "Colleagues", "Strangers"))
+
+d <- melt(c, id.vars="Scale")
+
+# Everything on the same plot
+# ggplot(d, aes(Scale,value, col=variable)) + geom_point() + stat_smooth() 
+```
+
+
+```{r}
+img <- ggplot(d,  aes(Scale,value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +  
+  labs( x= "Scale",  y = "Percentage of Participants") + 
+  theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
+        axis.title=element_text(size=14,face="bold")) + 
+  geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+
+
+png("device2.png", 1080, 900)
+plot(img)
+dev.off()
 ```
