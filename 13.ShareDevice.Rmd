@@ -93,6 +93,7 @@ dev.off()
 #   facet_wrap(~variable)
 ```
 
+#### Read for others text
 ```{r}
 df <- copy[, 60:61]
 (df)
@@ -159,4 +160,9 @@ img <- ggplot(d,  aes(Scale,value, fill=variable)) +
 png("device2.png", 1080, 900)
 plot(img)
 dev.off()
+```
+
+```{r}
+rm(c)
+rm(d)
 ```

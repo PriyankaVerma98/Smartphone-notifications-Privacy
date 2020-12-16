@@ -1,0 +1,108 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(tidyr)
+library(reshape2)
+df <- as.data.frame(copy$Q171)
+df<- df %>% drop_na()
+df
+```
+
+```{r}
+print(df[46,1])
+```
+
+### Do you clear your notifications before handing your phone to someone else?
+```{r}
+df <- copy [ , c("Q3.6_1", "Q3.6_2", "Q3.6_3", "Q3.6_4", "Q3.6_5", "Q3.6_6", "Q3.6_7") ]
+df<- df %>% drop_na()
+(df)
+
+df[] <- lapply(df, factor, levels = c("Never", "Rarely", "Sometimes", "Always", "N/A")) 
+summary(df)
+
+print("no of users who clear notifications before handing over their device:")
+nrow(df)
+```
+
+```{r}
+c <- as.data.frame( sapply(X = df, FUN = table))
+c<- tibble::rownames_to_column(c, "Scale")
+c <- c[ c$Scale != "N/A", ]  #remove N/As last row
+for (i in 2:8) {
+  t <- sum(c[,i])
+  # print(t)
+  c[, i] <- 100 *( c[, i]/t)
+  c[, i] <- round(c[, i], 2)
+}
+
+# c$Scale <- factor(c$Scale, levels =c("Never", "Rarely", "Sometimes", "Always", "N/A"), ordered = TRUE)
+setnames(c, old = c("Q3.6_1","Q3.6_2", "Q3.6_3", "Q3.6_4", "Q3.6_5", "Q3.6_6", "Q3.6_7"), new = c('Spouse', 'Siblings', "Parents", "Children older than 13", "Friends", "Colleagues", "Strangers"))
+summary(c)
+
+d <- melt(c, id.vars="Scale")
+```
+
+```{r}
+img <- ggplot(d,  aes(Scale,value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +  
+  labs( x= "Scale",  y = "Percentage of Participants") + 
+  theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
+        axis.title=element_text(size=14,face="bold")) + 
+  geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+
+
+png("sharingBeh.png", 1080, 900)
+plot(img)
+dev.off()
+```
+
+
+#### What all actions users take before handing their device to someone else?
+```{r}
+# colnames(copy)
+df <- copy[, 70:80]
+df <- df[, 1:9]
+head(df)
+```
+
+```{r}
+df[] <- lapply(df, factor)
+count <- as.data.frame(summary(df))
+c <- df %>%  summarise_all(funs(sum(!is.na(.))))
+t <- nrow(df[rowSums(is.na(df)) != ncol(df), ])
+c[, 1:9] <- 100 *( c[, 1:9]/t)
+c <- round(c,2)
+colnames(c) <- c("Don't allow anyone else to use" ,"Nothing", "Close running applications", "Clear notifications", "Enable guest mode/second space", "Enable app locks", "Change accessibility settings", "Watch over the other person's use", "Check all the applications used")
+c <- t(c)
+colnames(c) <- c("Per")
+c <- as.data.frame(c)
+c<- tibble::rownames_to_column(c, "Choices")
+colnames(c)
+c$Choices<- factor(c$Choices, levels = c$Choices)
+```
+
+```{r}
+img <- ggplot(c, aes(x = Choices, y=Per )) + geom_bar(stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x= "Choices",  y = "Percentage of Participants") + 
+  theme(axis.text.x = element_text( size = 20, angle = 90), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),axis.title=element_text(size=14,face="bold")) + geom_text(aes(label = Per),vjust = 1.5, size= 6.5)
+plot(img)
+
+
+png("shareBeh2.png", 1080, 900)
+plot(img)
+dev.off()
+
+```
+
+
+
+
+
