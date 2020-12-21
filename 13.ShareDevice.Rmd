@@ -1,9 +1,10 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Device sharing Behaviour"
+output:
+  html_document:
+    df_print: paged
 ---
-###DEvice sharing Behaviour
-
+- Updated 
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -12,43 +13,38 @@ library(tidyr)
 library(reshape2)
 ```
 
+### How frequently can someone else view the contents of notifications on your phone in any of the following places?
 ```{r}
 # head(copy)
 df <- copy[, 52:59]
 head(df)
-
 ```
 
 ```{r}
 # str(df)
 summary(df)
 sapply(df, class)
-
 ```
 
 ```{r}
-df[, 1:8][is.na(df[, 1:8])] <- "N/A"
-df <- df[ df$Q2.9_1!= "N/A" , ]
-df <- df[ df$Q2.9_2!= "N/A" , ]
-df <- df[ df$Q2.9_3!= "N/A" , ]
-df <- df[ df$Q2.9_4!= "N/A" , ]
-df <- df[ df$Q2.9_5!= "N/A" , ]
-df <- df[ df$Q2.9_6!= "N/A" , ]
-df <- df[ df$Q2.9_7!= "N/A" , ]
-df <- df[ df$Q2.9_8!= "N/A" , ]
+df[, 1:8][is.na(df[, 1:8])] <- "Not reported"
+# df <- df[ df$Q2.9_1!= "N/A" , ]
+# df <- df[ df$Q2.9_2!= "N/A" , ]
+# df <- df[ df$Q2.9_3!= "N/A" , ]
+# df <- df[ df$Q2.9_4!= "N/A" , ]
+# df <- df[ df$Q2.9_5!= "N/A" , ]
+# df <- df[ df$Q2.9_6!= "N/A" , ]
+# df <- df[ df$Q2.9_7!= "N/A" , ]
+# df <- df[ df$Q2.9_8!= "N/A" , ]
 
 
-df[] <- lapply(df, factor, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day")) 
+df[] <- lapply(df, factor, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day", "Not reported")) 
 nrow(df)
+```
+
+```{r}
 
 c <- as.data.frame( sapply(X = df, FUN = table))
-t <- sum(c$Q2.9_3)
-t
-c[, 1:8]<- 100 *( c[, 1:8]/t)
-c <- round(c, 2)
-```
-
-```{r}
 print(row.names(c))
 
 c<- tibble::rownames_to_column(c, "Scale")
@@ -57,13 +53,38 @@ setnames(c, old = c("Q2.9_1",  "Q2.9_2", "Q2.9_3","Q2.9_4", "Q2.9_5", "Q2.9_6", 
 
 colnames(c)
 
-c$Scale <- factor(c$Scale, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day"), ordered = TRUE)
+c$Scale <- factor(c$Scale, levels = c("Never", "Few times a month", "Few times a week", "Once a day", "Few times a day", "Not reported"), ordered = TRUE)
 ```
 
+#### calculate the count N
 ```{r}
-## single plots
-ggplot(aes(x= Scale, y= Home), data = c) + geom_bar(fill = "cornflowerblue",color="black",stat = 'identity' , position='dodge' ) +  labs(x = "Scale Points",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = Home ), position = position_dodge(0.9),vjust = 1.5)
+for (i in 2: 9){
+  print(c[4, i] + c[5, i ])
+}
 
+```
+
+
+```{r}
+
+for (i in 2:9) {
+  t <- sum(c[,i])
+  # print(t)
+  c[, i] <- 100 *( c[, i]/t)
+  c[, i] <- round(c[, i], 2)
+}
+
+# t <- sum(c$Q2.9_3)
+# t
+# c[, 1:8]<- 100 *( c[, 1:8]/t)
+# c <- round(c, 2)
+```
+
+
+```{r}
+for(i in 0:7){
+  print(d[6*i +5, c("value")] + d[6*i +4, c("value")])
+}
 ```
 
 
@@ -73,13 +94,14 @@ d <- melt(c, id.vars="Scale")
 # Everything on the same plot
 # ggplot(d, aes(Scale,value, col=variable)) + geom_point() + stat_smooth() 
 
-img <- ggplot(d,  aes(Scale,value, fill=variable)) +
+img <- ggplot(d,  aes(Scale,value, col=variable)) +
   geom_bar(stat='identity', position='dodge') +  
   labs( x= "Scale",  y = "Percentage of Participants") + 
   theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
         axis.title=element_text(size=14,face="bold")) + 
-  geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+  geom_text(aes(label = value),position = position_dodge(1.0), vjust = -0.5, size= 5.5)
    
+plot(img)
 
 png("device.png", 1050, 900)
 
@@ -93,7 +115,7 @@ dev.off()
 #   facet_wrap(~variable)
 ```
 
-#### Read for others text
+#### Check values in 'others' text of previous question
 ```{r}
 df <- copy[, 60:61]
 (df)
@@ -116,12 +138,18 @@ dp
 
 
 
-### How freq do you share your phone 
+### How freq do you share your phone? 
 ```{r}
 df <- copy[62: 68]
-df<- df %>% drop_na()
-df[] <- lapply(df, factor, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A")) 
+head(df)
+```
 
+```{r}
+# df<- df %>% drop_na()
+df[, 1:7][is.na(df[, 1:7])] <- "Not reported"
+df[] <- lapply(df, factor, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A", "Not reported")) 
+
+nrow(df)
 summary(df)
 ```
 
@@ -129,7 +157,18 @@ summary(df)
 c <- as.data.frame( sapply(X = df, FUN = table))
 c<- tibble::rownames_to_column(c, "Scale")
 
-c <- c[ c$Scale != "N/A", ]  #remove N/As
+# c <- c[ c$Scale != "N/A", ]  #remove N/As
+```
+
+#### calculate value of N
+```{r}
+for(i in 2:8){
+  print(c[5, i] + c[6, i] + c[ 7,i])
+}
+```
+
+```{r}
+#convert to percentage
 for (i in 2:8) {
   t <- sum(c[,i])
   # print(t)
@@ -137,8 +176,7 @@ for (i in 2:8) {
   c[, i] <- round(c[, i], 2)
 }
 
-
-c$Scale <- factor(c$Scale, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A"), ordered = TRUE)
+c$Scale <- factor(c$Scale, levels = c("Never", "Less than once a week", "Few times a week", "Multiple times a week", "Once a day", "Few times a day", "Multiple times a day", "N/A", "Not reported"), ordered = TRUE)
 setnames(c, old = c("Q3.4_1","Q3.4_2", "Q3.4_3", "Q3.4_4", "Q3.4_5", "Q3.4_6", "Q3.4_7"), new = c('Spouse', 'Siblings', "Parents", "Children older than 13", "Friends", "Colleagues", "Strangers"))
 
 d <- melt(c, id.vars="Scale")
@@ -147,22 +185,32 @@ d <- melt(c, id.vars="Scale")
 # ggplot(d, aes(Scale,value, col=variable)) + geom_point() + stat_smooth() 
 ```
 
-
+#### calculate percentage for at least once a day
 ```{r}
-img <- ggplot(d,  aes(Scale,value, fill=variable)) +
-  geom_bar(stat='identity', position='dodge') +  
+for(i in 0:6){
+  print(d[9*i +5, c("value")] + d[9*i +6, c("value")] + d[9*i + 7, c("value")])
+}
+```
+
+
+#### Plot
+```{r}
+img <- ggplot(d,  aes(Scale,value, col=variable)) +
+  geom_bar(stat='identity', position = "dodge") +  
   labs( x= "Scale",  y = "Percentage of Participants") + 
-  theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
+  theme(legend.position =  c(.95, .95),legend.justification = c("right", "top"), legend.text = element_text(size = 20), axis.text.x = element_text(face = "bold", size = 20, angle = 25), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),
         axis.title=element_text(size=14,face="bold")) + 
-  geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+  geom_text(aes(label = value),position = position_dodge(1.0), vjust = -0.5, size= 5.5)
 
-
+plot(img)
 png("device2.png", 1080, 900)
 plot(img)
 dev.off()
 ```
 
 ```{r}
-rm(c)
-rm(d)
+rm(i)
+rm(a1)
+library(tidyselect)
+rm(list = ls(pattern = "^cpearson"))
 ```

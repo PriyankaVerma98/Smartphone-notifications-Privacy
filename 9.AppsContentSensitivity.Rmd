@@ -9,6 +9,7 @@ require(ggplot2)
 library(gridExtra)  
 library(reshape2)
 library(data.table)
+library(tidyselect)
 ```
 
 #### Instant Messaging comparison 
@@ -35,7 +36,7 @@ count$per <- round(count$per, 2)
 setnames(count, old = c("variable"), new = c('key'))
 count$value <- factor(count$value, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
 
-image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity', position='dodge') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+image <- ggplot(count, aes(value, y = per , fill= key)) +geom_bar(stat='identity') +  labs(x = "Likert Scale for concern",  y = "Percentage of Participants") + theme(axis.text.x = element_text(face = "bold", color = "#993333", size = 9, angle = 15)) + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
 plot(image)
 ```
 

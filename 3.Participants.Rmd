@@ -1,9 +1,7 @@
 ---
 title: "Partcipants"
-output: Partcipants
+
 ---
-
-
 ```{r}
 library(qualtRics)
 library(httr)
@@ -13,6 +11,7 @@ qualtrics_api_credentials(api_key = "pdXzpoky87f33cJAIucnIetUV8JQY9VLTrNevWZC", 
 #httr::GET(url = url, httr::add_headers(headers))
 
 ```
+
 ```{r}
 readRenviron("~/.Renviron")
 ```
@@ -21,6 +20,11 @@ readRenviron("~/.Renviron")
 library(ggplot2)
 library("dplyr") #includes functions for selecting, filtering, grouping, and arranging data like mutate
 library("magrittr") # required for caoalesce function
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(tidyr)
+library(reshape2)
 ```
 
 ```{r}
@@ -31,14 +35,26 @@ mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE)
 Filtering out data
 ```{r}
 df1 <- mysurvey
-df2x <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
-df2x <- df2x[df2x$Q2.2 != "Other: (Please specify:)",]
+df2 <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
+df2 <- df2[df2$Q2.2 != "Other: (Please specify:)",]
 #df2 filtered for committment ques, Phone OS and attention checks
+rm(df1)
+ncol(df2)
+```
+### remove previous unused variables from env
+```{r}
+# library(tidyselect)
+# rm(list = ls(pattern = "^url")) 
 ```
 
-check duplicate IP Addresses
+###check duplicate IP Addresses
 ```{r}
-sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2x$IPAddress)) ,nrow(df2x) )
+df2 <- df2[rowSums(is.na(df2)) != ncol(df2), ] # result
+sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2$IPAddress)) ,nrow(df2) )
+```
+
+```{r}
+copy <- df2
 ```
 
 #### Completion time in seconds
@@ -46,10 +62,6 @@ sprintf("no. of unique responses: %d and total filtered responses: %d", length(u
 a <- mean(df2$`Duration (in seconds)`)
 b<- median(df2$`Duration (in seconds)`)
 sprintf("Mean survey completion time: %f min %f sec, Median completion time: %f min %f sec", a/60, a %% 60, b/60, b%%60  )
-```
-
-```{r}
-copy <- df2
 ```
 
 ###Demographics

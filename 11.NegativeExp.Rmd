@@ -1,0 +1,69 @@
+---
+title: "Instances of Negative Experiences"
+author: "Priyanka Verma"
+date: "12/18/2020"
+output: html_document
+
+- performed on 214 valid responses
+---
+```{r}
+require(dplyr)
+library(ggplot2)
+
+```
+
+```{r}
+# colnames(copy)
+df<- copy[  , c( "Q164", "Q165", "Q167_1",  "Q167_2",  "Q167_3",   "Q167_4",  "Q167_6")]
+head(df_m)
+```
+
+
+### Neg Exp
+```{r}
+df_m <- copy[  , c("Q164")]
+df_m$Q164 <- as.character(df_m$Q164)
+unique(df_m $Q164)
+
+df_m$Q164[ is.na(df_m$Q164) ] <- "Not reported"
+
+# "Q5.1_5" is an attention check question
+
+df_m$Q164 <- factor(df_m$Q164, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", "Not reported" ), ordered = TRUE )
+unique(df_m$Q164)
+
+c <- as.data.frame(100* prop.table(table(df_m$Q164)))
+c$Freq <- round(c$Freq, 2)
+
+```
+
+```{r}
+image3 <- ggplot(c, aes(x = Var1, y= Freq)) + geom_bar(stat="identity", fill = "#993333",color="black") +  labs(x = "Instances of negative experiences",  y = "Percentage of participants") + theme(axis.text.x = element_text( size = 20, angle =15), axis.title.y = element_text(size = 20), axis.text=element_text(size=15),axis.title=element_text(size=14)) + geom_text(aes(label = Freq),vjust = -0.5, size= 8.5)
+plot(image3)
+
+png("NegExp1.png", 650, 750)
+plot(image3)
+dev.off()
+```
+
+## Count exact values
+```{r}
+c <- as.data.frame((table(df_m$Q164)))
+sum(c$Freq)
+```
+
+
+```{r}
+df_m <- copy %>%select("Q165", "Q164", "Q167_1", "Q167_2", "Q167_3", "Q167_4", "Q167_6", "Q167_0", "Q167_0_TEXT", "Q167_4_TEXT")
+```
+
+```{r}
+sprintf("%s", df_m[29, "Q165"])
+```
+
+```{r}
+rm(df_m, df)
+rm(image3, c )
+```
+
+

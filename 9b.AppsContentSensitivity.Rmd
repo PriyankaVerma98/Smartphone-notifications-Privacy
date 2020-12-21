@@ -1,0 +1,85 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+### Plots to compare different apps notification preferences among family and colleagues
+```{r}
+require(dplyr)
+require(ggplot2)
+library(gridExtra)  
+library(reshape2)
+library(tidyselect)
+library(data.table)
+```
+
+
+```{r}
+# Take data from df2, which has filtered out for attention check, committment question, smartphone iOS
+df <- df2[  , 131:158]
+
+df <- df[, 1:15]
+df <- df %>% select(-c("Q6.3") )  
+
+
+df<- tibble::rownames_to_column(df, "No")
+
+```
+
+```{r}
+# class(molten$variable)
+molten <- melt(df, na.rm = FALSE, id= "No" ) 
+molten$variable <- as.character(molten$variable)
+
+molten$No[startsWith(molten$variable, "Q169_")] <- "Family"
+molten$No[startsWith(molten$variable, "Q170_")] <- "Colleague"
+
+molten$variable[endsWith(molten$variable, "_1")] <- "Instant messaging"
+molten$variable[endsWith(molten$variable, "_2")] <- "Social media"
+molten$variable[endsWith(molten$variable, "_3")] <- "Calendar"
+molten$variable[endsWith(molten$variable, "_4")] <- "E-mail"
+molten$variable[endsWith(molten$variable, "_5")] <- "Banking and payments"
+molten$variable[endsWith(molten$variable, "_6")] <- "Health and fitness"
+molten$variable[endsWith(molten$variable, "_7")] <- "Dating"
+
+molten[, 3][is.na(molten[, 3])] <- "Not reported"
+
+molten$value <- factor(molten$value, levels =  c("Extremely concerned", "Somwhat concerned", "Neither concerned nor unconcerned", "Somwhat unconcerned", "Completely unconcerned", "N/A", "Not reported"), ordered = TRUE)
+
+molten$variable <- factor(molten$variable, levels = c("Instant messaging","Social media", "Calendar","E-mail","Banking and payments", "Health and fitness", "Dating"), ordered = TRUE)
+
+class(molten$variable)
+print(unique(molten$value))
+
+c <- as.data.frame(table(molten))
+c <- molten %>% count(variable, value, No)
+```
+
+
+```{r}
+
+image <- ggplot(data = molten) +geom_bar(mapping= aes(x = variable, fill= value), position = "fill") +  facet_wrap(~ No, nrow = 1) + labs(x = "App Categories",  y = "Proportion of Participants") + theme(legend.text = element_text(size = 14), axis.text.x = element_text(face = "bold", color = "#993333", size = 14, angle = 90), strip.text = element_text(size = 16), axis.text.y = element_text(face = "bold", size = 14, angle = 90))
+# + geom_text(aes(label = per), position = position_dodge(0.9),vjust = 1.5)
+plot(image)
+
+png("AppSensitivity1.png", 1080, 900)
+plot(image)
+dev.off()
+
+```
+
+Link: https://r4ds.had.co.nz/data-visualisation.html#facets 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
