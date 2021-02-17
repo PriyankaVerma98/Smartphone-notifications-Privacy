@@ -1,5 +1,5 @@
 ## Introduction
-To understand privacy concerns regarding notification content and delivery, we conducted a study in which participants (N = 235) described their preferences and practices related to smartphone notifications. 
+To understand privacy concerns regarding notification content and delivery, we conducted a study in which participants (N = 235) described their preferences and practices related to smartphone notifications. The data collected through survey was analysed using mixed methods research analysis.
 
 
 ## Key Results
