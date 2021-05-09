@@ -4,24 +4,26 @@ author: "Priyanka Verma"
 date: "12/18/2020"
 output: html_document
 
-- performed on 214 valid responses
+- performed on 212 valid responses
+- cleaned for readability
 ---
 ```{r}
 require(dplyr)
 library(ggplot2)
+library(stringr)
 
 ```
 
 ```{r}
-# colnames(copy)
-df<- copy[  , c( "Q164", "Q165", "Q167_1",  "Q167_2",  "Q167_3",   "Q167_4",  "Q167_6")]
-head(df_m)
+df<- df2[  , c( "Q164", "Q165", "Q167_1",  "Q167_2",  "Q167_3",   "Q167_4",  "Q167_6")]
+head(df)
 ```
+
 
 
 ### Neg Exp
 ```{r}
-df_m <- copy[  , c("Q164")]
+df_m <- df2[  , c("Q164")]
 df_m$Q164 <- as.character(df_m$Q164)
 unique(df_m $Q164)
 
@@ -29,41 +31,69 @@ df_m$Q164[ is.na(df_m$Q164) ] <- "Not reported"
 
 # "Q5.1_5" is an attention check question
 
-df_m$Q164 <- factor(df_m$Q164, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", "Not reported" ), ordered = TRUE )
+df_m[, c("Q164")][(df[, c("Q164")]) == "1-2" ] <- "1-5"
+df_m[, c("Q164")][(df[, c("Q164")]) == "3-5" ] <- "1-5"
+df_m[, c("Q164")][(df[, c("Q164")]) == "More than 20" ] <- "20+"
+
+df_m$Q164 <- factor(df_m$Q164, levels = c("0", "1-5", "6-10", "11-20", "20+", "Not reported" ), ordered = TRUE )
 unique(df_m$Q164)
 
 c <- as.data.frame(100* prop.table(table(df_m$Q164)))
-c$Freq <- round(c$Freq, 2)
+c$Freq <- round(c$Freq)
+
+str(c)
 
 ```
 
 ```{r}
-image3 <- ggplot(c, aes(x = Var1, y= Freq)) + geom_bar(stat="identity", fill = "#993333",color="black") +  labs(x = "Instances of negative experiences",  y = "Percentage of participants") + theme(axis.text.x = element_text( size = 20, angle =15), axis.title.y = element_text(size = 20), axis.text=element_text(size=15),axis.title=element_text(size=14)) + geom_text(aes(label = Freq),vjust = -0.5, size= 8.5)
-plot(image3)
+img <- ggplot(c, aes(x = Var1, y= Freq )) + geom_bar(width = 0.7, stat="identity", fill = "darkblue",color="black") +  labs(x = "Number of negative experiences",  y = "percentage of participants") + theme(axis.text.x = element_text(color = "black", size = 16, angle =0),axis.title.x = element_text(size = 18) , axis.title.y = element_text(size = 18), axis.text.y = element_text(color = "black", size=16),axis.line = element_line(), panel.background = element_rect(fill ="white")) + geom_text(aes(label = paste0(Freq, "%")),vjust = -0.5, size= 7.5) + scale_x_discrete(labels = function(Var1) str_wrap(Var1, width = 7)) + coord_cartesian(ylim = c(0, 60))+ scale_y_continuous(breaks = seq(0,60, 10))
+plot(img)
 
-png("NegExp1.png", 650, 750)
-plot(image3)
+# image3 <- ggplot(c, aes(x = "", y= Freq, fill= Var1 )) + geom_bar(stat="identity", fill = "#993333",color="white") +  coord_polar("y", start=0)   + scale_fill_brewer(palette="Set1") 
+# +theme(legend.position="none") 
+# geom_text(aes(y = Freq, label = Var1), color = "white", size=6)
+# plot(image3)
+
+```
+
+```{r}
+
+# png("NegExp1.png", 650, 750)
+# plot(image3)
+# dev.off()
+
+pdf("NegExp1_version2.pdf", width= 9)
+plot(img)
 dev.off()
 ```
 
-## Count exact values
+### Count exact values
 ```{r}
 c <- as.data.frame((table(df_m$Q164)))
 sum(c$Freq)
 ```
 
-
 ```{r}
-df_m <- copy %>%select("Q165", "Q164", "Q167_1", "Q167_2", "Q167_3", "Q167_4", "Q167_6", "Q167_0", "Q167_0_TEXT", "Q167_4_TEXT")
+df_m <- df2 %>%select("Q165", "Q164", "Q167_1", "Q167_2", "Q167_3", "Q167_4", "Q167_6", "Q167_0", "Q167_0_TEXT", "Q167_4_TEXT")
+tail(df_m)
 ```
 
+### download the reasons for neg experiences for qualitative coding
 ```{r}
-sprintf("%s", df_m[29, "Q165"])
+df <- df2[, c("Q165")]
+
+class(df$Q165)
+
+df <- df[!is.na(df$Q165), ]
+
+write.csv(df, "NegExp.csv")
+
+write.table(df, file = "NegExp-Q165.txt", sep = "\t",row.names = FALSE)
 ```
 
+#remove the extra varaibles that were created
 ```{r}
 rm(df_m, df)
-rm(image3, c )
+rm(img, c )
 ```
-
 
