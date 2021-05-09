@@ -1,0 +1,146 @@
+---
+title: "Last Notification"
+output: html_notebook
+---
+
+```{r}
+require(dplyr)
+library(ggplot2)
+library(stringr)
+```
+
+```{r}
+df <- df2[  , c("Q4.2")]
+df$Negative_experiences <- df2$Q164 
+head(df)
+```
+
+#### Types of Apps the last notification came from
+```{r}
+unique(df$Q4.2)
+```
+
+
+### Concern if someone else see the notification!!
+```{r}
+dfx <- df2[, c("Q175")]
+class(dfx$Q175)
+dfx$Q175 <- (as.character(dfx$Q175))
+dfx$Q175[ is.na(dfx$Q175) ] <- "Not reported"
+unique(dfx$Q175)
+
+dfx[] <- lapply(dfx, factor,  levels = c("Extremely concerned", "Somewhat concerned", "Neither concerned nor unconcerned", "Somewhat unconcerned", "Completely unconcerned", "Not reported")) 
+
+c <-as.data.frame(100*prop.table(table(dfx)))
+c$Freq <- round(c$Freq)
+
+# remove Not reported
+c <- c[1:5, ]
+```
+
+#### Plot for: Participants' level of concern if someone else viewed the latest notification they received.
+```{r}
+img <- ggplot(c, aes(x = dfx, y= Freq )) + geom_bar(width=0.5, stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x= "Likert Scale",  y = "Percentage of Participants") + 
+  theme(axis.text.x = element_text(color = "black", size = 16, angle = 0), axis.title.y = element_text(size = 17, angle = 90),  axis.title.x= element_blank(), axis.text.y = element_text(color = "black", size = 16, angle = 0), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank() ,axis.line = element_line()) + geom_text(aes(label = paste0(Freq, "%") ),vjust = -0.5, size= 8) + scale_x_discrete(labels = function(dfx) str_wrap(dfx, width = 5)) + coord_cartesian(ylim = c(0, 50)) + scale_y_continuous(breaks = seq(0,50, 10))
+plot(img)
+
+```
+
+```{r}
+pdf(file="Last2_version2.pdf", width = 8) #save to pdf
+plot(img)
+dev.off()
+```
+
+### Does notification contain information of someone else
+```{r}
+dfx <- df2[, c("Q4.3","Q4.4")]
+head(dfx)
+unique(dfx$Q4.4)
+```
+
+```{r}
+df <- dfx[dfx$Q4.3 == "Yes",2 ]
+head(df)
+df$Q4.4 <- as.character(df$Q4.4)
+df$Q4.4[ is.na(df$Q4.4) ] <- "Not reported"
+unique(df$Q4.4)
+```
+Extremely concerned               Not at all concerned             
+[4] Somewhat unconcerned              Neither concerned nor unconcerned Somewhat concerned 
+
+```{r}
+df[] <- lapply(df, factor,  levels = c("Extremely concerned", "Somewhat concerned", "Neither concerned nor unconcerned", "Somewhat unconcerned", "Not at all concerned", "Not reported")) 
+
+c <-as.data.frame(100*(prop.table(table(df))))
+c$Freq <- round(c$Freq)
+
+c<- c[1:5, ] #remove not reported from plot
+c$df  <- as.character(c$df)
+c[5,1] = "Completely unconcerned"
+c$df <- factor(c$df, levels = c("Extremely concerned", "Somewhat concerned", "Neither concerned nor unconcerned", "Somewhat unconcerned","Completely unconcerned"), ordered = TRUE)
+
+```
+
+
+```{r}
+img <- ggplot(c, aes(x = df, y= Freq )) + geom_bar(width=0.5, stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x = "Likert Scale", y = "Percentage of Participants") + 
+  theme(axis.text.x = element_text(color = "black", size = 16, angle = 0), axis.title.y = element_text(size = 17, angle = 90), axis.text=element_text(color = "black",size=16),axis.title.x=element_blank(), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line = element_line()) + geom_text(aes(label =  paste0(Freq, "%") ),vjust = -0.5, size=9)+ scale_x_discrete(labels = function(df2) str_wrap(df2, width = 5)) + coord_cartesian(ylim = c(0, 50))
+plot(img)
+# img <- ggplot(c, aes(x = dfx, y= Freq )) + geom_bar(width=0.5, stat="identity", fill = "cornflowerblue",color="black")+ 
+#   labs( x= "Likert Scale",  y = "Percentage of Participants") + 
+#   theme(axis.text.x = element_text(color = "black", size = 17.5, angle = 0), axis.title.y = element_text(size = 17, angle = 90),  axis.title.x= element_blank(), axis.text.y = element_text(color = "black", size = 16, angle = 0), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank() ,axis.line = element_line()) + geom_text(aes(label = paste0(Freq, "%") ),vjust = -0.5, size= 8) + scale_x_discrete(labels = function(dfx) str_wrap(dfx, width = 5)) + coord_cartesian(ylim = c(0, 100))
+# plot(img)
+
+# png("Last3.png", 1080, 900)
+# plot(img)
+# dev.off()
+```
+
+```{r}
+pdf(file="Last3_version3.pdf", width = 8)
+plot(img)
+dev.off()
+```
+
+#### the number of participants in each group
+```{r}
+c <-as.data.frame(((table(df))))
+```
+
+### Extras: not used in analysis
+##### How users interacted with last notification
+```{r}
+# How quickly did you address the notification after you first saw it?
+print(df[df$Q4.7 == "Other: (Please specify:)", ]) 
+# 2 mentioned haven't addressed it yet
+```
+
+```{r}
+df <- df[!is.na(df$Q4.7) , ]
+unique(df$Q4.7)
+df$Q4.7 <- as.character(df$Q4.7)
+df$Q4.7[! is.na(df$Q4.7_0_TEXT) ] <- "Didn't address it"
+
+dfx <- as.data.frame(df$Q4.7)
+dfx <- drop_na(dfx)
+colnames(dfx) <- "s"
+dfx[] <- lapply(dfx, factor,  levels = c("within a minute", "within 5 minutes", "within 30 minutes", "within an hour", "within 6 hours", "within 12 hours", "within 24 hours", "Didn't address it")) 
+
+image3 <- ggplot(dfx, aes(x = s)) +   geom_bar(aes(y = 100*(..count..)/sum(..count..)), fill = "#993333",color="black") +  labs(x = "Frequency",  y = "% Participants") + theme(axis.text.x = element_text( color = "#993333", size = 20, angle = 15), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=20),axis.title=element_text(size=20,face="bold"))
+
+100* prop.table(table(dfx))
+
+plot(image3)
+png("image3.png", 1080, 900)
+print(image3)
+dev.off()
+
+rm(dfx)
+```
+
+
+
+
