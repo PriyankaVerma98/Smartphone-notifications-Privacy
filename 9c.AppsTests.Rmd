@@ -1,0 +1,206 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+- Wilcoxon Signed-Rank Test for apps content sensitivity
+- cleaned
+```{r}
+require(dplyr)
+require(ggplot2)
+library(gridExtra)  
+library(reshape2)
+library(tidyselect)
+library(data.table)
+```
+
+```{r}
+df <- df2[  , 131:158]
+df <- df[, 1:15]
+df <- df %>% select(-c("Q6.3") )  
+
+df[] <- lapply(df, factor, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE) 
+df <- df%>% mutate_if(is.factor, as.numeric)
+```
+
+#### Statistical Tests
+
+- 1) Instant messaging
+*Dependent T-Test*
+- the distribution of the differences between the scores of the two related groups needs to be normally distributed. You can do this by simply subtracting each individuals' score in one group from their score in the other related group and then testing for normality in the normal way
+```{r}
+k <- df[,c("Q169_1","Q170_1" )]
+k <- k[!is.na(k$Q169_1) & !is.na(k$Q170_1),]
+k$diff <- k$Q169_1 - k$Q170_1
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+```
+- dependent t-test can not be used violates normality assumption and dependent variable is not measured on a continuous scale 
+[Source](https://statistics.laerd.com/spss-tutorials/dependent-t-test-using-spss-statistics.php)
+
+*Mann Whitney U-test*
+- can not be used because it violates the assumption that the observations are independenent (i.e. there must be different participants in each group with no participant being in more than one group.) [Source](https://statistics.laerd.com/spss-tutorials/mann-whitney-u-test-using-spss-statistics.php)
+
+*Wilcoxon signed-rank test*
+-Wilcoxon signed-rank test is the nonparametric test equivalent to the dependent t-test. As the Wilcoxon signed-rank test does not assume normality in the data, it can be used when this assumption has been violated and the use of the dependent t-test is inappropriate. It is used to compare two sets of scores that come from the same participants. 
+[Source](https://statistics.laerd.com/spss-tutorials/wilcoxon-signed-rank-test-using-spss-statistics.php)
+- Assumption #1: Your dependent variable should be measured at the ordinal or continuous level. 
+- Assumption #2: Your independent variable should consist of two categorical, "related groups" or "matched pairs". "Related groups" indicates that the same subjects are present in both groups.
+- Assumption #3: The distribution of the differences between the two related groups (i.e., the distribution of differences between the scores of both groups of the independent variable; for example, the reaction time in a room with "blue lighting" and a room with "red lighting") needs to be symmetrical in shape.
+
+```{r}
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+
+```{r}
+#### Test
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- c(res$p.value)
+```
+
+
+- 2) Social media
+```{r}
+k <- df[,c("Q169_2","Q170_2" )]
+k <- k[!is.na(k$Q169_2) & !is.na(k$Q170_2),]
+k$diff <- k$Q169_2 - k$Q170_2
+shapiro.test(k$diff) # => p value less than 0.05. reject null hypo. It deviates significantly from normal distribution
+```
+```{r}
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+- 3. Calendar
+```{r}
+k <- df[,c("Q169_3","Q170_3" )]
+k <- k[!is.na(k$Q169_3) & !is.na(k$Q170_3),]
+k$diff <- k$Q169_3 - k$Q170_3
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #bit skewed to right
+```
+-ok to be not perfectly symmetric. [Source](https://www.datanovia.com/en/lessons/wilcoxon-test-in-r/)
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+- 4) Email
+```{r}
+k <- df[,c("Q169_4","Q170_4" )]
+k <- k[!is.na(k$Q169_4) & !is.na(k$Q170_4),]
+k$diff <- k$Q169_4 - k$Q170_4
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+- 5) Banking and Payments
+```{r}
+k <- df[,c("Q169_5","Q170_5" )]
+k <- k[!is.na(k$Q169_5) & !is.na(k$Q170_5),]
+k$diff <- k$Q169_5 - k$Q170_5
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+- 6) health and fitness
+```{r}
+k <- df[,c("Q169_6","Q170_6" )]
+k <- k[!is.na(k$Q169_6) & !is.na(k$Q170_6),]
+k$diff <- k$Q169_6 - k$Q170_6
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+- 7) dating
+```{r}
+k <- df[,c("Q169_7","Q170_7" )]
+k <- k[!is.na(k$Q169_7) & !is.na(k$Q170_7),]
+k$diff <- k$Q169_7 - k$Q170_7
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+#### Conclude based on P-values
+```{r}
+pvals
+adj_pvals <- pvals*7
+adj_pvals
+```
