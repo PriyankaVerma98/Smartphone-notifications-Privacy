@@ -1,0 +1,94 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+### Importing data from Qualtrics
+```{r}
+library(qualtRics)
+library(httr)
+Sys.getenv("QUALTRICS_BASE_URL")
+url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
+qualtrics_api_credentials(api_key = "<enter api key>", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
+```
+
+```{r}
+readRenviron("~/.Renviron")
+```
+
+```{r}
+mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE)
+df2 <- mysurvey #df2 dataframe is used below for analysis
+```
+
+#### Import libraries and packages
+```{r}
+library(ggplot2)
+library("dplyr") #includes functions for selecting, filtering, grouping, and arranging data like mutate
+library("magrittr") # required for caoalesce function
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(tidyr)
+library(reshape2)
+```
+
+### Processing IP Addresses 
+
+#### check duplicate IP Addresses
+```{r}
+sprintf("no. of unique responses: %d and total filtered responses: %d", length(unique(df2$IPAddress)) ,nrow(df2) )
+```
+
+#### remove rows with duplicate IPs
+```{r}
+df2 <- df2[!duplicated(df2$IPAddress), ]
+```
+
+#### Check for Country code = US
+```{r}
+#function to convert IP to country
+freegeoip <- function(ip, format = ifelse(length(ip)==1,'list','dataframe'))
+{
+  if (1 == length(ip))
+  {
+    # a single IP address
+    require(rjson)
+    url <- paste(c("http://freegeoip.live/json/", ip), collapse='')
+    ret <- fromJSON(readLines(url, warn=FALSE))
+    if (format == 'dataframe')
+      ret <- data.frame(t(unlist(ret)))
+    return(ret)
+  } 
+  else {
+    ret <- data.frame()
+    for (i in 1:length(ip))
+    {
+      r <- freegeoip(ip[i], format="dataframe")
+      ret <- rbind(ret, r)
+    }
+    return(ret)
+  }
+}
+
+ipaddresses <- as.vector(df2$IPAddress)
+ips <- as.data.frame(freegeoip(ipaddresses)) #function takes some time to run!
+```
+
+```{r}
+#create a list of IP Addresses outside of US
+to_remove <- as.data.frame(ips[ips$country_code != "US", c("ip") ])
+colnames(to_remove) <- c("IP")
+print(to_remove)
+
+#remove the IP address not from US
+df2 <- df2[!(df2$IPAddress %in% to_remove$IP),]
+```
+
+#### create a CSV file and export data
+```{r}
+export <- subset (df2, select = -c(IPAddress,LocationLatitude, LocationLongitude)) #remove some columns
+colnames(export)
+head(export)
+write.csv(export, "surveydata.csv")
+```
+
