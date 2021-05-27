@@ -8,7 +8,7 @@ library(qualtRics)
 library(httr)
 Sys.getenv("QUALTRICS_BASE_URL")
 url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
-qualtrics_api_credentials(api_key = "<enter api key>", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
+qualtrics_api_credentials(api_key = " ", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
 ```
 
 ```{r}
@@ -30,6 +30,16 @@ library(ggplot2)
 library(data.table)
 library(tidyr)
 library(reshape2)
+```
+
+### Filtering out data -->
+```{r}
+#filtered for committment ques, Phone OS and attention checks 
+df1 <- df2 
+df2 <- df1[df1$Q1.2 == "I will provide my best answers." & df1$Q3.8 == "Translate" & df1$Q5.1_5 == "Somewhat agree" , ] 
+df2 <- df2[df2$Q2.2 != "Other: (Please specify:)",] 
+
+rm(df1) #remove extra object 
 ```
 
 ### Processing IP Addresses 
