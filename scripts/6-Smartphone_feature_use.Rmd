@@ -1,0 +1,268 @@
+ ---
+title: "R Notebook"
+output: html_notebook
+---
+### Smartphone Features Usage Analysis
+```{r}
+df2_ <- copy
+df2_ <- df2_[  , c("Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5")]
+```
+
+### usage analysis of different features 
+```{r}
+# DND Mode
+tab_count <- table(df2_$Q3.2_1, useNA = c("always"))
+tab_per <- 100*prop.table(table((df2_$Q3.2_1), useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[17]) #percentage of users who don't use DND mode i.e. use of 0 hours in a typical day
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]] -tab_per[17] , nrow(df2_)- tab_count[["0"]]-tab_count[17] )
+#total - those who use for 0 hours - those who did not report
+```
+
+```{r}
+# Silent Mode
+tab_count <- table(df2_$Q3.2_2,useNA = c("always"))
+tab_per <-  100*prop.table(table((df2_$Q3.2_2),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[23])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[23], nrow(df2_)-tab_count[["0"]]-tab_count[23] )
+#total - those who use for 0 hours - those who did not report
+```
+
+```{r}
+# Turn off
+tab_count <- table(df2_$Q3.2_3,useNA = c("always"))
+tab_per <-  100*prop.table(table((df2_$Q3.2_3),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[18])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[18], nrow(df2_)-tab_count[["0"]]-tab_count[18] )
+```
+
+
+```{r}
+# Airplane Mode
+tab_count <- table(df2_$Q3.2_4,useNA = c("always"))
+tab_per <-  100*prop.table(table((df2_$Q3.2_4),useNA = c("always")))
+print(tab_count)
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[19])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[19], nrow(df2_)-tab_count[["0"]]-tab_count[19] )
+```
+
+```{r}
+# Notification Managemnet Apps
+tab_count <- table(df2_$Q3.2_5,useNA = c("always"))
+tab_per <-  100*prop.table(table((df2_$Q3.2_5),useNA = c("always")))
+print(tab_count)
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[24])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[24], nrow(df2_)-tab_count[["0"]]-tab_count[24])
+```
+
+
+### Compare with Negative Experiences
+```{r}
+df2_ <- copy
+df2_ <- df2_[  , c("Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5" ,"Q164")]
+
+df2_$Q164<- factor(df2_$Q164, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE))
+
+#remove NAs
+df2_$Q164 <- as.character(df2_$Q164)
+df2_ <- df2_[(df2_$Q164 )!= "NA", ]
+df2_ <- df2_[! is.na(df2_$Q164 ), ]
+df2_ <- df2_[! is.na(df2_$Q3.2_1 ), ]
+df2_ <- df2_[! is.na(df2_$Q3.2_2 ), ]
+df2_ <- df2_[! is.na(df2_$Q3.2_3 ), ]
+df2_ <- df2_[! is.na(df2_$Q3.2_4 ), ]
+df2_ <- df2_[! is.na(df2_$Q3.2_5 ), ]
+```
+
+
+```{r}
+# df2_<- copy[  , c( "Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5", "Q164")]
+df2_ <- df2_ %>% mutate_if(is.factor, as.numeric)
+```
+
+#### Mean use grouped by Instances of Negative Experiences
+```{r}
+# DND
+df2_ %>%  group_by(df2_$Q164) %>% summarise(mean_DND = round(mean(Q3.2_1, na.rm = TRUE), 2), median_DND = median(Q3.2_1, na.rm = TRUE), sd_DND = sd(Q3.2_1, na.rm = TRUE))
+```
+
+```{r}
+#silent mode
+df2_ %>%  group_by(df2_$Q164) %>% summarise(mean = round( mean(Q3.2_2, na.rm = TRUE),2), median = median(Q3.2_2, na.rm = TRUE), sd = sd(Q3.2_2, na.rm = TRUE))
+```
+
+```{r}
+#turn off device
+df2_ %>%  group_by(df2_$Q164) %>% summarise(mean = round(mean(Q3.2_3, na.rm = TRUE),2), median = median(Q3.2_3, na.rm = TRUE), sd = sd(Q3.2_3, na.rm = TRUE))
+```
+
+```{r}
+#airplane mode
+df2_ %>%  group_by(df2_$Q164) %>% summarise(mean = round( mean(Q3.2_4, na.rm = TRUE),2), median = median(Q3.2_4, na.rm = TRUE), sd = sd(Q3.2_4, na.rm = TRUE))
+```
+
+```{r}
+#notification mgmt apps
+df2_ %>%  group_by(df2_$Q164) %>% summarise(mean = round(mean(Q3.2_5, na.rm = TRUE),2), median = median(Q3.2_5, na.rm = TRUE), sd = sd(Q3.2_5, na.rm = TRUE))
+```
+
+
+
+#### Correlation tests
+```{r}
+t <- cor.test(df2_$Q164, df2_$Q3.2_1, method = "spearman",exact=FALSE)
+t
+pvals <- c(t$p.value)
+
+t <- cor.test(df2_$Q164, df2_$Q3.2_2, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df2_$Q164, df2_$Q3.2_3, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df2_$Q164, df2_$Q3.2_4, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df2_$Q164, df2_$Q3.2_5, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+print(pvals)
+adj_pvals <- pvals*5
+print(adj_pvals)
+
+
+#earlier code. does not specify correlation method
+# source("http://www.sthda.com/upload/rquery_cormat.r")
+# c <- rquery.cormat(df2_)
+# print(c$r)
+# print(c$p)
+# padj <- apply(c$p, 2, p.adjust, method = "bonferroni")
+# print(padj)
+```
+
+```{r}
+#normality tests
+shapiro.test(df2_$Q3.2_1)
+shapiro.test(df2_$Q3.2_2)
+shapiro.test(df2_$Q3.2_3)
+shapiro.test(df2_$Q3.2_4)
+shapiro.test(df2_$Q3.2_5)
+shapiro.test(df2_$Q164)
+#p-values << 0.05 => all of them are non-normal distributions
+```
+
+
+
+#### Kruskal wallis test
+```{r}
+result = kruskal.test(Q164 ~  Q3.2_1  ,   data = df2_) 
+print(result)
+pvals <- c(result$p.value)
+
+result = kruskal.test(Q164 ~  Q3.2_2  ,   data = df2_) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(Q164 ~  Q3.2_3  ,   data = df2_) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(Q164 ~  Q3.2_4  ,   data = df2_) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(Q164 ~  Q3.2_5  ,   data = df2_) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+
+print(pvals)
+adj_pvals <- pvals*5
+print(adj_pvals)
+
+```
+
+
+###Extras
+#### Text responses
+```{r}
+df <- copy[, c("Q3.3")]
+df <- df[! is.na(df$Q3.3 ), ]
+
+write.table(df, file = "Features-Q3.3.txt", sep = "\t",row.names = FALSE)
+
+df <- copy[, c( "Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5", "Q3.3")]
+```
+```{r}
+sprintf("%s", df2_[130,"Q3.3"])
+```
+
+```{r}
+df <- copy[  , c("Q153","Q144" ,"Q3.1", "Q3.2_1","Q3.2_2" , "Q3.2_3" , "Q3.2_4" ,"Q3.2_5" ,"Q3.3")]
+df$Negative_experiences <- copy$Q164 
+```
+
+#### No. of notifications in the last one hour
+```{r}
+100*prop.table(table( df$Q153 ))
+table( df$Q153)
+nrow(df)
+#head(df)
+```
+
+#### Frequncy of picking up the phone for addressing notifications
+```{r}
+table( df$Q144)
+100 * prop.table(table( df$Q144 ))
+```
+
+```{r}
+summary(df$Q144)
+```
+
+
+#### Screen Waking up patterns
+```{r}
+summary(df$Q3.1)
+100*prop.table(table((df$Q3.1)))
+```
+
+
+
+
+
+
+#### Anova test
+```{r}
+# one.way <- aov(Q164 ~ Q3.2_1 + Q3.2_2 + Q3.2_3+ Q3.2_4 + Q3.2_5 , data = df2_)
+# summary(one.way)
+# 
+# a1 <- aov(Q164 ~ Q3.2_1, data = df2_)
+# summary(a1)
+# 
+# b1 <- aov(Q164 ~ Q3.2_2, data = df2_)
+# summary(b1)
+# 
+# c1 <- aov(Q164 ~ Q3.2_3 , data= df2_)
+# summary(c1)
+# 
+# c1 <- aov(Q164 ~ Q3.2_4 , data= df2_)
+# summary(c1)
+# 
+# c1 <- aov(Q164 ~ Q3.2_5 , data= df2_)
+# summary(c1)
+```
+

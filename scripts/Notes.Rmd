@@ -1,0 +1,169 @@
+---
+title: "Notes"
+author: "Priyanka Verma"
+date: "12/18/2020"
+output: html_document
+---
+## NA's handling
+```{r}
+df_m[, 1:7][is.na(df_m[, 1:7])] <- "N/A" # define you NA's
+df_m$Q164[ is.na(df_m$Q164) ] <- "Not reported"
+df_m <- df_m[! is.na(df_m$Q164 ), ]
+table(copy$Q11.4, useNA = c("always"))
+sapply(df, class) # check type of each column
+k <- k[!is.na(k$Q169_2) & !is.na(k$Q170_2),]
+df %>% summarise_each(funs(mean(., na.rm = TRUE))) ## for verifying if NAs are used or not!
+df<- df %>% drop_na()
+
+sapply(df, class)#sapply() function takes data frame and converts each column to factor
+df <- df%>% mutate_if(is.factor, as.character)
+
+df %>%  group_by(df$Q164) %>% summarise(count= n())
+
+```
+
+## Remove extra global vars
+```{r}
+library(tidyselect)
+rm(list = ls(pattern = "^cpearson"))
+```
+
+##rename cols
+```{r}
+c<- tibble::rownames_to_column(c, "Scale")
+colnames(df) #find column names
+colnames(to_remove) <- c("IP")
+
+```
+
+### plotting resources
+[R Graph resource](https://www.r-graph-gallery.com/index.html)
+[Data Visualisations resource](https://cengel.github.io/R-data-wrangling/data-visualization-with-ggplot2.html)
+[Data Visualisations resource](https://r4ds.had.co.nz/data-visualisation.html#facets)
+[Color codes](http://www.sthda.com/english/wiki/ggplot2-colors-how-to-change-colors-automatically-and-manually)
+[Axis and themes manipulations](https://rstudio-pubs-static.s3.amazonaws.com/3364_d1a578f521174152b46b19d0c83cbe7e.html)
+[Plots Cheat sheet](http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/)
+
+Color scheme1 (https://coolors.co/)
+Color scheme2 (https://venngage.com/blog/color-blind-friendly-palette/)
+
+```{r}
+
+# Colors
+p + scale_fill_brewer(palette="Dark2")
+
+# Scale
+scale_y_discrete(limit = c( "5", "10","15", "20","25", "30", "35", "40"))
+coord_cartesian(ylim = c(0, 50))
+scale_y_continuous(breaks = seq(0,50, 10))
+scale_y_continuous(expand = c(0,0)) # to reduce gaps between bars and axis
+geom_text(aes(label = paste0(Freq, "%")),vjust = -0.5, size= 7.5) # to add % sign on bar plots
+
+#Text on graph
+geom_text(aes(label = paste0(Freq, "%")),vjust = -0.5, size= 7.5) # add percentage sign to num column
+geom_text(aes(label = value),position = position_dodge(1.0), vjust = 0, size= 5.5)
+scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 10)) # wrap text in multiple lines
+
+# save to vector image
+pdf(file="shareDev.pdf", width = 14, height = 10)
+plot(img)
+dev.off()
+
+# add percentage sign 
+c$Per <- paste(c$Per, "%", sep = "")
+```
+
+### Factor columns
+```{r}
+df[] <- lapply(df, factor, levels = c("Never", "Rarely", "Sometimes", "Always", "N/A")) 
+df <- df%>% mutate_if(is.factor, as.numeric)
+df$Q170_1 <- factor(df$Q170_1, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned"), ordered = TRUE)
+
+copy <- copy %>% mutate(Q11.4 = coalesce(Q11.4_1, Q11.4_2, Q11.4_3, Q11.4_4, Q11.4_5, Q11.4_6, Q11.4_0, Q11.4_8), .keep="unused")
+```
+
+
+### Sum columns
+```{r}
+c <- df %>%  summarise_all(funs(sum(!is.na(.)))) # sum non-Null entries column wise
+
+group_by(my_data, group) %>%
+  summarise(
+    count = n(),
+    mean = mean(weight, na.rm = TRUE),
+    sd = sd(weight, na.rm = TRUE),
+    median = median(weight, na.rm = TRUE),
+    IQR = IQR(weight, na.rm = TRUE)
+  )
+
+df %>%  group_by(df$Q164) %>% summarise(count= n())
+
+df <- df %>% mutate(TechEfficacyScore = rowSums(.[1:5]) ) # calculate the score by adding first 5 columns
+```
+
+
+
+### Test Stats
+[Correlation](https://datascience.stackexchange.com/questions/64260/pearson-vs-spearman-vs-kendall)
+[Corelation tests differences](https://www.researchgate.net/post/Correlation_Matrix_Pearson_Spearman_or_Kendall)
+[Shapiro Wilk Normality Test](https://www.geeksforgeeks.org/shapiro-wilk-test-in-r-programming/)
+[Non-parametric tests for group differences in R](https://www.statmethods.net/stats/nonparametric.html)
+[Dependent T-test Intro](https://statistics.laerd.com/spss-tutorials/dependent-t-test-using-spss-statistics.php)
+[Dependent T-test details](https://statistics.laerd.com/statistical-guides/dependent-t-test-statistical-guide.php)
+
+##### Corelation tests: comparison of Pearson and Spearman coefficients
+- The fundamental difference between the two correlation coefficients is that the Pearson coefficient works with a linear relationship between the two variables whereas the Spearman Coefficient works with monotonic relationships as well.
+- One more difference is that Pearson works with raw data values of the variables whereas Spearman works with rank-ordered variables.
+- Pearson between two continuous variables, whereas Spearman between two continuous or ordinal variables.
+[Source of comparison](https://support.minitab.com/en-us/minitab-express/1/help-and-how-to/modeling-statistics/regression/supporting-topics/basics/a-comparison-of-the-pearson-and-spearman-correlation-methods/#:~:text=The%20Pearson%20correlation%20evaluates%20the%20linear%20relationship%20between%20two%20continuous%20variables.&text=The%20Spearman%20correlation%20coefficient%20is,evaluate%20relationships%20involving%20ordinal%20variables.)
+
+
+- For Spearman’s correlation test in R, solve the warning “Cannot compute exact p-value with ties”.
+- When the variables are not continuous but could be ranked then we do not use pearson correlation coefficient to find the linear relationship, in this case spearman correlation coefficient comes into the scene.
+-Since the spearman correlation coefficient considers the rank of values, the correlation test ignores the same ranks to find the p-values as a result we get the warning “Cannot compute exact p-value with ties”. This can be avoided by using exact = FALSE inside the cor.test function.
+- [Source](https://www.tutorialspoint.com/how-to-avoid-the-warning-cannot-compute-exact-p-value-with-ties-while-perform-correlation-test-for-spearman-s-correlation-in-r)
+
+##### Kruskal Wallis Test Assumptions
+- One independent variable with two or more levels (independent groups). The test is more commonly used when you have three or more levels. For two levels, consider using the Mann Whitney U Test instead.
+- Ordinal scale, Ratio Scale or Interval scale dependent variables.
+- Your observations should be independent. In other words, there should be no relationship between the members in each group or between groups. For more information on this point, see: Assumption of Independence.
+- All groups should have the same shape distributions. Most software (i.e. SPSS, Minitab) will test for this condition as part of the test.
+[Source](https://statistics.laerd.com/spss-tutorials/kruskal-wallis-h-test-using-spss-statistics.php)
+
+
+
+```{r}
+
+```
+
+
+### Check for Country code = US
+```{r}
+freegeoip <- function(ip, format = ifelse(length(ip)==1,'list','dataframe'))
+{
+  if (1 == length(ip))
+  {
+    # a single IP address
+    require(rjson)
+    url <- paste(c("http://freegeoip.live/json/", ip), collapse='')
+    ret <- fromJSON(readLines(url, warn=FALSE))
+    if (format == 'dataframe')
+      ret <- data.frame(t(unlist(ret)))
+    return(ret)
+  } 
+  else {
+    ret <- data.frame()
+    for (i in 1:length(ip))
+    {
+      r <- freegeoip(ip[i], format="dataframe")
+      ret <- rbind(ret, r)
+    }
+    return(ret)
+  }
+}
+
+ipaddresses <- as.vector(df2$IPAddress)
+ips <- as.data.frame(freegeoip(ipaddresses))
+```
+
+

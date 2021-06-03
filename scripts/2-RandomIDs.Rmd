@@ -4,17 +4,22 @@ output:
   pdf_document: default
   html_notebook: default
 ---
+- extracts the random codes for tallying with AMT submission for payments
 ```{r}
 library(qualtRics)
-Sys.getenv("QUALTRICS_BASE_URL")
-url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
-#httr::GET(url = url, httr::add_headers(headers))
-qualtrics_api_credentials(api_key = "pdXzpoky87f33cJAIucnIetUV8JQY9VLTrNevWZC", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
-
+library(grid)
+#install.packages("gridExtra")
+library(gridExtra)
 ```
 
 ```{r}
+Sys.getenv("QUALTRICS_BASE_URL")
+url <- qualtRics:::create_surveys_url("iu.co1.qualtrics.com")
+qualtrics_api_credentials(api_key = " ", base_url = "iu.co1.qualtrics.com",overwrite  = TRUE, install = TRUE)
 readRenviron("~/.Renviron")
+```
+
+```{r}
 mysurvey <- fetch_survey(surveyID = all_surveys()$id[2], verbose = TRUE, force_request= TRUE)
 ```
 
@@ -38,11 +43,7 @@ copy[1:5,]
 ```
 
 ```{r}
-#ac_done <- mysurvey$Q3.8 == "Translate" & mysurvey$Q5.1_5 == "Somewhat agree" 
 df2.1 <- copy[, c("attention_check", "rand", "StartDate","EndDate", "IPAddress")]
-library(grid)
-#install.packages("gridExtra")
-library(gridExtra)
 pdf("RandomID2.pdf", height = nrow(df2.1),  width = 2*ncol(df2.1))
 grid.table(df2.1)
 dev.off()

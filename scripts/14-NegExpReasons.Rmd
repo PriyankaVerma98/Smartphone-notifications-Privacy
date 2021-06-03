@@ -1,0 +1,69 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+# - cohance kappa score
+df <- copy[c("Q165", "Q164")]
+df
+```
+
+
+```{r}
+# colnames(copy)
+df <- copy[, 121: 130]
+
+(df)
+```
+
+###reading text values
+```{r}
+df2 <- df[, 7 ]
+# df2<- df2 %>% drop_na()
+df2
+```
+```{r}
+df2 <- df[, 8 ]
+df2<- df2 %>% drop_na()
+df2
+```
+
+```{r}
+sprintf("%s", df2[11,1])
+rm(df2)
+```
+
+### PLot of reasons
+
+```{r}
+df<- df[, 1:5]
+df[] <- lapply(df, factor)
+c <- df %>%  summarise_all(funs(sum(!is.na(.))))
+t <- nrow(df[rowSums(is.na(df)) != ncol(df), ])
+c[, 1:5] <- 100 *( c[, 1:5]/t)
+c <- round(c,2)
+colnames(c) <- c("Given my phone to someone else", "Left the phone screen unlocked.", "Forgot to take actions to silence notif.", "I was screen casting / projecting", "Notif included sensitive content.")
+c <- t(c)
+colnames(c) <- c("Per")
+c <- as.data.frame(c)
+c<- tibble::rownames_to_column(c, "Choices")
+colnames(c)
+c$Choices<- factor(c$Choices, levels = c$Choices)
+```
+
+
+```{r}
+img <- ggplot(c, aes(x = Choices, y=Per )) + geom_bar(stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x= "Choices",  y = "Percentage of Participants") + 
+  theme(axis.text.x = element_text( size = 20, angle = 90), axis.title.y = element_text(size = 20, angle = 90), axis.text=element_text(size=15),axis.title=element_text(size=14,face="bold")) + geom_text(aes(label = Per),vjust = 1.5, size= 6.5)
+plot(img)
+
+
+
+png("NegExp2.png", 1080, 900)
+plot(img)
+dev.off()
+
+```
+
+
