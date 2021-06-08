@@ -167,10 +167,6 @@ dev.off()
 
 
 
-
-
-
-
 ### Analysis of last notification delivered on smartphone
 #### Types of Apps the last notification came from
 ```{r}
