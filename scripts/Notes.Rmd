@@ -4,6 +4,7 @@ author: "Priyanka Verma"
 date: "12/18/2020"
 output: html_document
 ---
+- Notes for personal references 
 ## NA's handling
 ```{r}
 df_m[, 1:7][is.na(df_m[, 1:7])] <- "N/A" # define you NA's
