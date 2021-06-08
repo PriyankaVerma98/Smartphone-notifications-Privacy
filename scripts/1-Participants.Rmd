@@ -1,7 +1,7 @@
 ---
 title: "Partcipants"
 ---
-### Preprocessing of data, Demographics
+### Preprocessing of data, Demographics 
 ### 'df2', 'copy' are the filtered dataframe used in other scripts
 ```{r}
 library(qualtRics)
