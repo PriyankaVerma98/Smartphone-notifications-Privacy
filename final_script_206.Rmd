@@ -288,14 +288,14 @@ molten <- molten[molten$value != "N/A", ]
 
 ```{r}
  # Figure 3 in paper
-img <- ggplot(data = molten) +geom_bar(width = 0.7, mapping= aes(x = variable, fill= value), position = "dodge") +  facet_wrap(~ No, nrow = 1) + labs(x ="F",  y = "Number of Participants") + theme(panel.background = element_rect(fill ="white"), legend.position =  c( "bottom"), legend.title=element_blank(), legend.text = element_text(size = 15), axis.text.x = element_text(color = "black", size = 15, angle = 90), strip.text = element_text(size = 17), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ),  axis.line = element_line()) +scale_fill_brewer(palette="Accent") 
+img <- ggplot(data = molten) +geom_bar(width = 0.7, mapping= aes(x = variable, fill= value), position = "dodge", color= "black") +  facet_wrap(~ No, nrow = 1) + labs(x ="F",  y = "Number of Participants") + theme( strip.text.x = element_text(face = "bold"), panel.background = element_rect(fill ="white"), legend.position =  c( "bottom"), legend.title=element_blank(), legend.text = element_text(size = 15, margin = margin(r=18)), axis.text.x = element_text(color = "black", size = 15, angle = 90), strip.text = element_text(size = 17), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( margin = margin(r=12), size = 15, angle = 90 ),  axis.line = element_line()) +scale_fill_brewer(palette="Accent") 
 plot(img)
 ```
 
 ```{r}
 #export the image
-pdf(file="AppSensitivity2.pdf", width = 15, height = 9)
-plot(image)
+pdf(file="concernbyappcategory.pdf", width = 16, height = 9)
+plot(img)
 dev.off()
 ```
 #### Likert scale score points: Table 2
@@ -569,7 +569,7 @@ adj_pvals
 
 
 
-### How frequently can someone else view the contents of notifications on your phone in any of the following places?
+### How frequently can someone else view the contents of notifications on your phone in any of the following places? Fig: 4b
 ```{r}
 df <- df2[, 49:56]
 head(df)
@@ -609,6 +609,7 @@ c <- c[- 4,]
 # c holds the Percentage of participants in each category
 ```
 #### Plot for Figure 4b
+
 ```{r}
 d <- melt(c, id.vars="Scale") #melt to prepare for plotting
 
@@ -616,21 +617,18 @@ d$Scale <- factor(c$Scale, levels =  c("At least once a day", "At least few time
 
 d$variable <- factor(d$variable, levels =  c('Home', 'Meetings', "Classes", "Seminars/ presentations", "Cafeterias/ restaurants", "Social gatherings", "Stores/ markets", "Public transport" ), ordered = TRUE)
 ```
+
 ```{r}
-img <- ggplot(d,  aes(Scale,value, fill=variable,color="black" )) + geom_bar(stat='identity', position = 'dodge',width=0.8) +  labs(  y = "Percentage of Participants") + scale_y_continuous(breaks = seq(0,60, 10),expand = c(0,0))+ coord_cartesian(ylim = c(0, 60)) +  theme(legend.title=element_blank(), legend.position = c("bottom"), legend.margin=margin(0,0,0,0),legend.text = element_text(size = 14),legend.box.margin=margin(0,0,0,0), axis.text.x = element_text(color = "black", size = 16, angle =0), axis.title.x=element_blank(), axis.title.y = element_text(size = 15, angle = 90), axis.text.y=element_text(size=16),  axis.line = element_line(), panel.background = element_rect(fill ="white"))  + scale_fill_brewer(palette="Dark2") + scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 10))
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + geom_bar(stat='identity', position = 'dodge',width=0.8, color="black") +  labs(  y = "Percentage of Participants") + scale_y_continuous(breaks = seq(0,60, 10),expand = c(0,0))+ coord_cartesian(ylim = c(0, 60)) +  theme(legend.title=element_blank(), legend.position = c("bottom"), legend.margin=margin(0,0,0,0),legend.text = element_text(size = 14, margin = margin(r = 9)) ,legend.box.margin=margin(0,0,0,0), axis.text.x = element_text(color = "black", size = 16, angle =0), axis.title.x=element_blank(), axis.title.y = element_text(size = 15, angle = 90, margin = margin(r=12)), axis.text.y=element_text(size=16),  axis.line = element_line(), panel.background = element_rect(fill ="white"))  + scale_fill_brewer(palette="Dark2") + scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 10))
+# margin = margin(r = 2, unit = 'in')
 plot(img)
 ```
 ```{r}
+# pdf("device_sharing_places.pdf", width= 9)
 pdf("device_sharing_places.pdf", width= 9)
 plot(img)
 dev.off()
 ```
-
-
-
-
-
-
 
 ### How freq do you share your phone to various people? 
 ```{r}
@@ -683,10 +681,7 @@ c$Scale <- factor(c$Scale, levels = c("Never", "Less than once a week", "At leas
 #prepare data for plotting 
 d <- melt(c, id.vars="Scale")
 d$Scale <- factor(d$Scale, levels = c("At least once a day", "At least once a week", "Less than once a week", "Never" ), ordered = TRUE)
-img <- ggplot(d,  aes(Scale,value, fill=variable)) +
-  geom_bar(stat='identity', position = "dodge",width=0.8)+
-  labs(  y = "Percentage of Participants") + coord_cartesian(ylim = c(0, 60))+ scale_y_continuous(breaks = seq(0,60, 10), expand = c(0,0))+
-  theme(legend.title = element_blank(), legend.position =  c("bottom"), legend.text = element_text(size = 16), axis.text.x = element_text(color = "black",size = 16), axis.title.x= element_blank(), axis.title.y = element_text(size = 16, angle = 90), axis.text.y = element_text(size=15),  axis.line = element_line(), panel.background = element_rect(fill ="white")) + scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 10)) + scale_fill_brewer(palette="Dark2")
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + geom_bar(stat='identity', position = "dodge",width=0.8,color="black")+ labs(y = "Percentage of Participants") + coord_cartesian(ylim = c(0, 60))+ scale_y_continuous(breaks = seq(0,60, 10), expand = c(0,0))+ theme(legend.title = element_blank(), legend.position =  c("bottom"), legend.text = element_text(size = 15,margin = margin(r = 18)), axis.text.x = element_text(color = "black",size = 16), axis.title.x= element_blank(), axis.title.y = element_text(size = 16, angle = 90, margin = margin(r=12)), axis.text.y = element_text(size=15),  axis.line = element_line(), panel.background = element_rect(fill ="white")) + scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 10)) + scale_fill_brewer(palette="Dark2")
 
 plot(img)
 ```
@@ -696,8 +691,6 @@ pdf(file="device_share_people.pdf", width= 9)
 plot(img)
 dev.off()
 ```
-
-
 
 ### Device Sharing Behaviour
 
@@ -731,12 +724,12 @@ c$Per <- round(c$Per) #round off percentages
 c$Choices<- factor(c$Choices, levels = c("Check all the applications used","Enable guest mode/second space",  "Change accessibility settings","Watch over the other person's use","Enable app locks", "Close running applications", "Clear notifications"))
 ```
 ```{r}
-img <- ggplot(c, aes(x = Choices, y=Per )) + geom_bar(width=0.4, stat="identity", fill = "darkblue",color="black")+ labs( y = "Percentage of participants")  +  theme(axis.text.y = element_text(color= "black", size = 20, angle = 0), axis.title.x=element_text(size=18), axis.title.y = element_blank(), axis.text.x = element_text(color = "black", size = 16, angle =0)  , axis.line = element_line(), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + geom_text(aes(label = paste0(Per, "%")),hjust = -0.3, size= 7)+ scale_fill_brewer(palette="Accent")+  scale_y_continuous(breaks = seq(0,50, 10), expand = c(0,0))+  coord_flip(ylim = c(0, 51)) 
+img <- ggplot(c, aes(x = Choices, y=Per )) + geom_bar(width=0.4, stat="identity", fill = "cornflowerblue",color="black")+ labs( y = "Percentage of Participants")  +  theme(axis.text.y = element_text(color= "black", size = 20, angle = 0), axis.title.x=element_text(size=18), axis.title.y = element_blank(), axis.text.x = element_text(color = "black", size = 16, angle =0)  , axis.line = element_line(), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + geom_text(aes(label = paste0(Per, "%")),hjust = -0.3, size= 7)+ scale_fill_brewer(palette="Accent")+  scale_y_continuous(breaks = seq(0,50, 10), expand = c(0,0))+  coord_flip(ylim = c(0, 51)) 
 plot(img)
 ```
 ```{r}
 #export
-pdf(file="shareBeh2.pdf",  width = 15)
+pdf(file="shareBeh1.pdf",  width = 15)
 plot(img)
 dev.off()
 ```
@@ -778,16 +771,15 @@ c$Scale <- factor(c$Scale, levels = c("Never", "Rarely", "Sometimes", "Always"),
 ```{r}
 d <- melt(c, id.vars="Scale")
 
-img <- ggplot(d,  aes(Scale,value, fill=variable)) +
-  geom_bar(width=0.8, stat='identity', position = 'dodge', color= "black") +  
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + geom_bar(width=0.8, stat='identity', position = 'dodge', color= "black") +  
   labs(  y = "Percentage of Participants") + coord_cartesian(ylim = c(0, 45))+ scale_y_continuous(expand = c(0,0)) +
-  theme(legend.position = c("bottom") , legend.title = element_blank(), legend.text = element_text(size = 15), axis.text.x = element_text(color= "black", size = 17, angle = 0), axis.title.x=element_blank(), axis.title.y = element_text(size = 15, angle = 90), axis.text=element_text(size=15),  axis.line = element_line(), panel.background = element_rect(fill ="white"))  + scale_fill_brewer(palette="Accent") 
+  theme(legend.position = c("bottom") , legend.title = element_blank(), legend.text = element_text(size = 14,margin = margin(r = 25)), axis.text.x = element_text(color= "black", size = 17, angle = 0), axis.title.x=element_blank(), axis.title.y = element_text(size = 15, angle = 90,margin = margin(r=12)), axis.text=element_text(size=15),  axis.line = element_line(), panel.background = element_rect(fill ="white"))  + scale_fill_brewer(palette="Accent") 
 
 plot(img)
 ```
 ```{r}
 #export image
-pdf(file="shareBeh1.pdf", width = 11)
+pdf(file="shareBeh2.pdf", width = 11)
 plot(img)
 dev.off()
 ```
