@@ -1,0 +1,1115 @@
+---
+title: "Final code script- 25 July "
+output: html_notebook
+---
+### Import data from CSV
+```{r}
+#import csv file and data
+data <- read.csv("data.csv") 
+```
+
+### Import Libraries
+```{r}
+library(tidyselect)
+library(ggplot2)
+library("magrittr") # required for caoalesce function
+library(dplyr) #includes functions for selecting, filtering, grouping, and arranging data like mutate
+library(data.table)
+library(tidyr)
+library(reshape2)
+library(stringr)
+library(gridExtra)  
+library(forcats)
+```
+
+### Completion time in seconds
+```{r}
+dft <- data
+a <- mean(dft$duration, na.rm = TRUE)
+# print(a)
+b <- median(dft$duration,na.rm = TRUE)
+# print(b)
+sprintf("Mean survey completion time: %f min, Median completion time: %f min", a/60, b/60 )
+```
+
+### Sample Characteristics
+#### Age
+```{r}
+df <- as.data.frame(data$birthyear)
+colnames(df) <- c("year")
+df$age <- (2020 - df$year) #calculate age from the year of birth
+sprintf("Age characteristics: Range: %f to %f , Mean: %f, Median: %f",min(df$age, na.rm = TRUE), max(df$age, na.rm = TRUE), mean(df$age, na.rm = TRUE), median(df$age, na.rm = TRUE))
+```
+
+#### Gender
+```{r}
+df2 <- data
+table(df2$gender,useNA = c("always")) #frequencies
+100*prop.table(table(df2$gender, useNA = c("always"))) #proportion
+```
+
+#### Ethnicity
+```{r}
+df2 <- data
+ethnicity<- df2 %>% mutate(other = coalesce( ethnicity_othertext, ethnicity_other), .keep= "unused")
+```
+
+```{r}
+ethnicity <- ethnicity %>% mutate(ethnicitytotal = coalesce(ethnicity_nativeamerican, ethnicity_asian, ethnicity_black, ethnicity_pi, ethnicity_white, ethnicity_hispanic, other, ethnicity_nosay), .keep="unused")
+```
+
+```{r}
+print(ethnicity$ethnicitytotal) #check the colesced columns
+```
+
+```{r}
+table(ethnicity$ethnicitytotal, useNA = c("always"))
+100*prop.table(table(ethnicity$ethnicitytotal, useNA = c("always")))
+```
+
+
+#### Profession
+```{r}
+df2 <- data
+table(df2$profession, useNA = c("always")) #frequencies
+unique(df2$profession)
+```
+
+#### Marital Status
+```{r}
+df2 <- data
+table(df2$marital,useNA = c("always")) #frequencies
+100*prop.table(table(df2$marital, useNA = c("always"))) #proportio
+```
+
+#### people in household
+```{r}
+df2 <- data
+table(df2$householdsize, useNA = c("always")) #frequencies
+100*prop.table(table(df2$householdsize, useNA = c("always"))) #proportio
+```
+
+#### years in US
+```{r}
+df2 <- data
+table(df2$yearsinusa, useNA = c("always")) #frequencies
+100*prop.table(table(df2$yearsinusa, useNA = c("always"))) #proportio
+```
+
+#### level of education
+```{r}
+df2 <- data
+table(df2$education, useNA = c("always"))
+100*prop.table(table(df2$education, useNA = c("always")))
+rm(df2)
+```
+
+
+
+
+
+
+
+
+
+
+
+### Instances of Negative Experiences
+```{r}
+df<- as.data.frame(data[  , c("negativeexperiences")])
+#negativeexperiences:.. How many instances of negative experiences have you faced due to notifications
+colnames(df) <- c("negativeexperiences")
+df$negativeexperiences <- as.character(df$negativeexperiences)
+
+df$negativeexperiences[ is.na(df$negativeexperiences) ] <- "Not reported"
+
+# group some values together
+df[, c("negativeexperiences")][(df[, c("negativeexperiences")]) == "1-2" ] <- "1-5"
+df[, c("negativeexperiences")][(df[, c("negativeexperiences")]) == "3-5" ] <- "1-5"
+df[, c("negativeexperiences")][(df[, c("negativeexperiences")]) == "More than 20" ] <- "20+"
+
+df$negativeexperiences <- factor(df$negativeexperiences, levels = c("0", "1-5", "6-10", "11-20", "20+", "Not reported" ), ordered = TRUE )
+
+#Count the number of participants in each category
+table(df$negativeexperiences)
+```
+#### plot the graph
+```{r}
+c <- as.data.frame(100* prop.table(table(df$negativeexperiences)))
+c$Freq <- round(c$Freq)
+img <- ggplot(c, aes(x = Var1, y= Freq )) + geom_bar(width = 0.7, stat="identity", fill = "cornflowerblue",color="black") +  labs(x = "Number of Negative Experiences",  y = "Percentage of Participants") + theme(axis.text.x = element_text(color = "black", size = 21, angle =0),axis.title.x = element_text(size = 23) , axis.title.y = element_text(size = 23,margin = margin(r= 12) ), axis.text.y = element_text(color = "black", size=21),axis.line = element_line(), panel.background = element_rect(fill ="white")) + geom_text(aes(label = paste0(Freq, "%")),vjust = -0.5, size= 7.5) + scale_x_discrete(labels = function(Var1) str_wrap(Var1, width = 7)) + coord_cartesian(ylim = c(0, 60))+ scale_y_continuous(breaks = seq(0,60, 10))
+plot(img)
+```
+```{r}
+# Export the graph
+pdf("negativexperiencesdistribution.pdf", width= 9)
+plot(img)
+dev.off()
+```
+
+
+### Analysis of last notification delivered on smartphone
+#### Types of Apps the last notification came from
+```{r}
+df <- as.data.frame(data[  , c("lastnotificationapp")])
+colnames(df) <- c("app_categories")
+unique(df$app_categories)
+```
+#### Concern if someone else see the last notification
+```{r}
+df <- as.data.frame(data[, c("ln_selfconcern")])
+colnames(df) <- c("concern_last_notif")
+df$concern_last_notif <- (as.character(df$concern_last_notif))
+df$concern_last_notif[ is.na(df$concern_last_notif) ] <- "Not reported" #convert na values to not reported
+
+unique(df$concern_last_notif)
+
+df[] <- lapply(df, factor,  levels = c( "Completely unconcerned", "Somewhat unconcerned", "Neither concerned nor unconcerned", "Somewhat concerned", "Extremely concerned", "Not reported")) 
+
+table(df) #find the count of each category
+```
+
+#### Plot for: Participants' level of concern if someone else viewed the latest notification they received.
+```{r}
+c <-as.data.frame(100*prop.table(table(df))) #find the percentages 
+c$Freq <- round(c$Freq)
+
+# remove Not reported before plotting
+c <- c[1:5, ]
+
+#plot for figure 2a in paper
+img <- ggplot(c, aes(x = df, y= Freq )) + geom_bar(width=0.5, stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x= "Likert Scale",  y = "Percentage of Participants") + 
+  theme(axis.text.x = element_text(color = "black", size = 19, angle = 0), 
+        axis.title.y = element_text(size = 23, angle = 90, margin = margin(r= 12)),  
+        axis.title.x= element_blank(), 
+        axis.text.y = element_text(color = "black", size = 21, angle = 0), 
+        panel.background = element_rect(fill ="white"), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank() ,
+        axis.line = element_line()) + 
+  geom_text(aes(label = paste0(Freq, "%") ),vjust = -0.5, size= 8) + 
+  scale_x_discrete(labels = function(df) str_wrap(df, width = 5)) + 
+  coord_cartesian(ylim = c(0, 50)) + 
+  scale_y_continuous(breaks = seq(0,50, 10))
+plot(img)
+```
+
+```{r}
+#export the image to pdf
+pdf(file="selfconcern.pdf", width = 10) #save to pdf
+plot(img)
+dev.off()
+```
+
+#### Does notification contain information of someone else
+```{r}
+dfx <- data[, c("ln_othersinfo","ln_othersconcern")]
+ #ln_othersinfo: does it contain information of someone else?
+ #ln_othersconcern: what would be their concern if someone other than you see it?
+head(dfx)
+```
+
+```{r}
+df <- as.data.frame(dfx[dfx$ln_othersinfo == "Yes",2 ]) #keep reponses where last notification contains information of someone else
+colnames(df) <- c("ln_othersconcern")
+df$ln_othersconcern <- as.character(df$ln_othersconcern)
+df$ln_othersconcern[ is.na(df$ln_othersconcern) ] <- "Not reported"
+unique(df$ln_othersconcern) #check the unique values of concern level
+rm(dfx) #clear extra dataframe
+```
+
+```{r}
+as.data.frame(((table(df))))  # prints the count of participants in each group
+
+c <-as.data.frame(100*(prop.table(table(df)))) #calculate percentage for plotting 
+c$Freq <- round(c$Freq)
+
+c$df  <- as.character(c$df)
+c[3,1] = "Completely unconcerned" # rename "Not at all concerned"
+
+c$df <- factor(c$df, levels = c( "Completely unconcerned", "Somewhat unconcerned", "Neither concerned nor unconcerned", "Somewhat concerned", "Extremely concerned"), ordered = TRUE)
+```
+
+```{r}
+img <- ggplot(c, aes(x = df, y= Freq )) + geom_bar(width=0.5, stat="identity", fill = "cornflowerblue",color="black")+ 
+  labs( x = "Likert Scale", y = "Percentage of Participants") + 
+    theme(axis.text.x = element_text(color = "black", size = 19, angle = 0), 
+        axis.title.y = element_text(size = 23, angle = 90, margin = margin(r= 12)),  
+        axis.title.x= element_blank(), 
+        axis.text.y = element_text(color = "black", size = 21, angle = 0), 
+        panel.background = element_rect(fill ="white"), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank() ,
+        axis.line = element_line()) +
+  geom_text(aes(label =  paste0(Freq, "%") ),vjust = -0.5, size=8)+ 
+  scale_x_discrete(labels = function(df) str_wrap(df, width = 5)) + 
+  coord_cartesian(ylim = c(0, 50))
+plot(img)
+```
+
+```{r}
+#export the plot to pdf
+pdf(file="otherconcern.pdf", width = 10)
+plot(img)
+dev.off()
+```
+
+
+### Privacy for content from different App categories
+```{r}
+df <- data %>% select(starts_with('appconcern'))
+df <- df %>% select(-c("appconcerncolleague_reason", "appconcernfamily_reason") )  
+head(df)
+df<- tibble::rownames_to_column(df, "No") #make the row numbers as a separate column
+```
+
+#### Plot the concerns for different apps: Figuere 3 in paper
+```{r}
+molten <- melt(df, na.rm = FALSE, id= "No" ) 
+molten$variable <- as.character(molten$variable)
+
+#rename the columns
+molten$No[startsWith(molten$variable, "appconcernfamily")] <- "Family Member" #appconcernfamily_in to appconcernfamily_dating are for family member seeing notification content
+molten$No[startsWith(molten$variable, "appconcerncolleague")] <- "Colleague"  #appconcerncolleague_* to appconcerncolleague_* are for colleague seeing notification content
+molten$variable[endsWith(molten$variable, "_im")] <- "Instant messaging"
+molten$variable[endsWith(molten$variable, "_social")] <- "Social media"
+molten$variable[endsWith(molten$variable, "_calendar")] <- "Calendar"
+molten$variable[endsWith(molten$variable, "_email")] <- "E-mail"
+molten$variable[endsWith(molten$variable, "_banking")] <- "Banking and payments"
+molten$variable[endsWith(molten$variable, "_health")] <- "Health and fitness"
+molten$variable[endsWith(molten$variable, "_dating")] <- "Dating"
+
+#correct the spellings
+molten[, c("value")] [molten[, c("value")] == "Somwhat unconcerned" ] <- "Somewhat unconcerned"
+molten[, c("value")] [molten[, c("value")] == "Somwhat concerned" ] <- "Somewhat concerned"
+
+#remove na values
+molten[, 3][is.na(molten[, 3])] <- "Not reported"
+molten <- molten[molten$value != "Not reported", ]
+
+#factor columns for plotting 
+molten$value <- factor(molten$value, levels =  c("Completely unconcerned",  "Somewhat unconcerned", "Neither concerned nor unconcerned" , "Somewhat concerned","Extremely concerned" , "N/A"), ordered = TRUE)
+molten$variable <- factor(molten$variable, levels = c("Instant messaging","Social media", "Calendar","E-mail","Banking and payments", "Health and fitness", "Dating"), ordered = TRUE)
+
+# COUNT OF PARTICIPANTS in each category
+c <- as.data.frame(table(molten))
+c <- molten %>% count(variable, value, No)
+
+molten <- molten[molten$value != "N/A", ]
+molten$No <- factor(molten$No, levels =  c("Family Member", "Colleague"), ordered = TRUE)
+```
+
+```{r}
+ # Figure 3 in paper
+img <- ggplot(data = molten) +geom_bar(width = 0.7, mapping= aes(x = variable, fill= value), position = "dodge", color= "black") +  facet_wrap(~ No, nrow = 1) + labs(x ="F",  y = "Number of Participants") + theme( 
+  strip.text.x = element_text(face = "bold", size = 24),
+  axis.title.y = element_text( margin = margin(r=15), size = 24, angle = 90 ), 
+  legend.text = element_text(size = 20.5, margin = margin(r=18)), 
+  axis.text.x = element_text(color = "black", size = 22, angle = 90), 
+  axis.text.y = element_text( size = 22, angle = 0 ),
+  panel.background = element_rect(fill ="white"), legend.position =  c( "bottom"), legend.title=element_blank(), 
+  axis.title.x = element_blank(),  axis.line = element_line() )  + 
+  scale_fill_brewer(palette="Accent") 
+plot(img)
+```
+
+```{r}
+#export the image
+pdf(file="concernbyappcategory.pdf", width = 21, height = 11)
+plot(img)
+dev.off()
+```
+
+#### Likert scale score points: Table 2
+```{r}
+df <- data %>% select(starts_with('appconcern'))
+df <- df %>% select(-c("appconcerncolleague_reason", "appconcernfamily_reason") )  
+head(df)
+
+
+df <- df[df$appconcernfamily_im != "N/A" & df$appconcerncolleague_im != "N/A" , ]
+df <- df[df$appconcernfamily_social != "N/A" & df$appconcerncolleague_social != "N/A" , ]
+df <- df[df$appconcernfamily_calendar != "N/A" & df$appconcerncolleague_calendar != "N/A" , ]
+df <- df[df$appconcernfamily_email != "N/A" & df$appconcerncolleague_email != "N/A" , ]
+df <- df[df$appconcernfamily_banking != "N/A" & df$appconcerncolleague_banking != "N/A" , ]
+df <- df[df$appconcernfamily_health != "N/A" & df$appconcerncolleague_health != "N/A" , ]
+df <- df[df$appconcernfamily_dating!= "N/A" & df$appconcerncolleague_dating != "N/A" , ]
+
+df[] <- lapply(df, factor, levels = c("Completely unconcerned", "Somwhat unconcerned", "Neither concerned nor unconcerned", "Somwhat concerned", "Extremely concerned")) 
+df <- df%>% mutate_if(is.factor, as.numeric) # convert the variable type
+
+df%>%summarize_if(is.numeric, funs( Mean = round(mean(., na.rm= TRUE),2), SD = round(sd(., na.rm = TRUE),2))) #calculates the mean score and SD for app the app categories
+#more score means more concern 
+```
+
+#### Statistical Tests for family v/s colleagues in different app categories 
+
+*Wilcoxon signed-rank test*
+-Wilcoxon signed-rank test is the nonparametric test equivalent to the dependent t-test. As the Wilcoxon signed-rank test does not assume normality in the data, it can be used when this assumption has been violated and the use of the dependent t-test is inappropriate. It is used to compare two sets of scores that come from the same participants. 
+[Source](https://statistics.laerd.com/spss-tutorials/wilcoxon-signed-rank-test-using-spss-statistics.php)
+- Assumption #1: Your dependent variable should be measured at the ordinal or continuous level. 
+- Assumption #2: Your independent variable should consist of two categorical, "related groups" or "matched pairs". "Related groups" indicates that the same subjects are present in both groups.
+- Assumption #3: The distribution of the differences between the two related groups (i.e., the distribution of differences between the scores of both groups of the independent variable; for example, the reaction time in a room with "blue lighting" and a room with "red lighting") needs to be symmetrical in shape.
+
+##### 1) Instant messaging
+```{r}
+k <- data[,c("appconcernfamily_im","appconcerncolleague_im" )]
+#appconcernfamily_im family mem
+k <- k[!is.na(k$appconcernfamily_im) & !is.na(k$appconcerncolleague_im),]
+k <- k[k$appconcernfamily_im != "N/A", ]
+k <- k[k$appconcerncolleague_im != "N/A", ]
+
+k$appconcernfamily_im <- factor(k$appconcernfamily_im, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_im <- factor(k$appconcerncolleague_im, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_im - k$appconcerncolleague_im
+#test for normality
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+```
+```{r}
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+#### Test
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- c(res$p.value) #store the p-values of test in list for appllying bonferroni correction later on 
+```
+
+##### 2) Social media
+```{r}
+k <- data[,c("appconcernfamily_social","appconcerncolleague_social" )]
+k <- k[!is.na(k$appconcernfamily_social) & !is.na(k$appconcerncolleague_social),]
+k <- k[k$appconcernfamily_social != "N/A", ]
+k <- k[k$appconcerncolleague_social != "N/A", ]
+
+k$appconcernfamily_social <- factor(k$appconcernfamily_social, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_social <- factor(k$appconcerncolleague_social, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_social - k$appconcerncolleague_social
+shapiro.test(k$diff) # => p value less than 0.05. reject null hypo. It deviates significantly from normal distribution
+```
+```{r}
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value) #add to list the p value
+pvals
+```
+
+##### 3) Calendar
+```{r}
+k <- data[,c("appconcernfamily_calendar","appconcerncolleague_calendar" )]
+k <- k[!is.na(k$appconcernfamily_calendar) & !is.na(k$appconcerncolleague_calendar),]
+
+k <- k[k$appconcernfamily_calendar != "N/A", ]
+k <- k[k$appconcerncolleague_calendar != "N/A", ]
+
+k$appconcernfamily_calendar <- factor(k$appconcernfamily_calendar, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_calendar <- factor(k$appconcerncolleague_calendar, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_calendar - k$appconcerncolleague_calendar
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #symmetric almost. -ok to be not perfectly symmetric. [Source](https://www.datanovia.com/en/lessons/wilcoxon-test-in-r/)
+```
+
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+##### 4) Email
+```{r}
+k <- data[,c("appconcernfamily_email","appconcerncolleague_email" )]
+k <- k[!is.na(k$appconcernfamily_email) & !is.na(k$appconcerncolleague_email),]
+
+k <- k[k$appconcernfamily_email != "N/A", ]
+k <- k[k$appconcerncolleague_email != "N/A", ]
+
+k$appconcernfamily_email <- factor(k$appconcernfamily_email, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_email <- factor(k$appconcerncolleague_email, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_email - k$appconcerncolleague_email
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+##### 5) Banking and Payments
+```{r}
+k <- data[,c("appconcernfamily_banking","appconcerncolleague_banking" )]
+k <- k[!is.na(k$appconcernfamily_banking) & !is.na(k$appconcerncolleague_banking),]
+
+k <- k[k$appconcernfamily_banking != "N/A", ]
+k <- k[k$appconcerncolleague_banking != "N/A", ]
+
+k$appconcernfamily_banking <- factor(k$appconcernfamily_banking, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_banking <- factor(k$appconcerncolleague_banking, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_banking - k$appconcerncolleague_banking
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+##### 6) health and fitness
+```{r}
+k <- data[,c("appconcernfamily_health","appconcerncolleague_health" )]
+k <- k[!is.na(k$appconcernfamily_health) & !is.na(k$appconcerncolleague_health),]
+
+k <- k[k$appconcernfamily_health != "N/A", ]
+k <- k[k$appconcerncolleague_health != "N/A", ]
+
+k$appconcernfamily_health <- factor(k$appconcernfamily_health, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_health <- factor(k$appconcerncolleague_health, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+
+k$diff <- k$appconcernfamily_health - k$appconcerncolleague_health
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+##### 7) dating
+```{r}
+k <- data[,c("appconcernfamily_dating","appconcerncolleague_dating" )]
+k <- k[!is.na(k$appconcernfamily_dating) & !is.na(k$appconcerncolleague_dating),]
+k <- k[k$appconcernfamily_dating != "N/A", ]
+k <- k[k$appconcerncolleague_dating != "N/A", ]
+
+k$appconcernfamily_dating <- factor(k$appconcernfamily_dating, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+k$appconcerncolleague_dating <- factor(k$appconcerncolleague_dating, levels =  c("Completely unconcerned",  "Somwhat unconcerned", "Neither concerned nor unconcerned" , "Somwhat concerned","Extremely concerned"), ordered = TRUE)
+
+k <- k%>% mutate_if(is.factor, as.numeric)
+
+k$diff <- k$appconcernfamily_dating - k$appconcerncolleague_dating
+shapiro.test(k$diff) # => less than 0.05. reject null hypo. It deviates significantly from normal distribution
+
+#check assumption 3 
+c <- k %>% count(diff)
+img <- c %>% ggplot(aes(x = diff, y = n)) + geom_bar(stat = "identity", fill = "blue")  + geom_text(aes(label = n),vjust = -0.5) + labs(x ="Difference",  y = "Count") + theme(panel.background = element_rect(fill ="white"), axis.text.x = element_text(color = "black", size = 15, angle = 90), axis.text.y = element_text( size = 16, angle = 0 ), axis.title.x = element_blank(),  axis.title.y = element_text( size = 15, angle = 90 ))
+plot(img) #yes symmetric
+```
+```{r}
+molten <- melt(k, na.rm = TRUE, id= "diff" ) 
+molten <- molten %>% select(-c("diff") )
+#test results
+res <- wilcox.test(value ~ variable, data = molten, paired = TRUE)
+res
+res$p.value
+pvals <- append(pvals, res$p.value)
+pvals
+```
+
+##### Apply Bonferroni Correction on p-values
+```{r}
+#7 hypothesis are tested for 7 app categories
+pvals
+adj_pvals <- pvals*7
+adj_pvals
+# compare based on 0.05
+```
+
+
+
+
+
+
+
+
+### How frequently can someone else view the contents of notifications on your phone in any of the following places? Fig: 4b
+#### Plot for Figure 4b
+```{r}
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + 
+  geom_bar(stat='identity', position = 'dodge',width=0.8, color="black") +
+  labs(  y = "Percentage of Participants") + 
+  scale_y_continuous(breaks = seq(0,60, 10),expand = c(0,0))+ 
+  coord_cartesian(ylim = c(0, 60)) +  
+  theme(legend.title=element_blank(), legend.position = c("bottom"), 
+        legend.margin=margin(0,0,0,0),
+        legend.text = element_text(size = 17, margin = margin(r = 17.5)) ,
+        legend.justification = "left",
+        legend.box.margin=margin(0,0,0,0), 
+        axis.text.x = element_text(color = "black", size =20, angle =0),
+        axis.title.x=element_blank(), 
+        axis.title.y = element_text(size = 24, angle = 90, margin = margin(r=12)),
+        axis.text.y=element_text(size=20), 
+        axis.line = element_line(), 
+        panel.background = element_rect(fill ="white"))  + 
+  scale_fill_brewer(palette="Dark2") + 
+  scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 13))
+plot(img)
+```
+```{r}
+pdf("devicesharingplaces.pdf", width= 10.7)
+plot(img)
+dev.off()
+```
+
+
+### How freq do you share your phone to various people? Fig 4a 
+```{r}
+# df <- data %>% select(starts_with('share'))
+df <- data %>% select(c("share_spouse", "share_siblings", "share_parents", "share_children", "share_friends", "share_colleagues", "share_strangers") )  
+head(df)
+```
+
+```{r}
+sapply(df, class)#sapply() function takes data frame and converts each column to factor
+df <- df%>% mutate_if(is.factor, as.character)
+
+df[, 1:7][is.na(df[, 1:7])] <- "Not reported"
+
+df[, 1:7][(df[, 1:7]) == "Once a day" ] <- "At least once a day"
+df[, 1:7][(df[, 1:7]) == "Few times a day" ] <- "At least once a day"
+df[, 1:7][(df[, 1:7]) == "Multiple times a day" ] <- "At least once a day"
+df[, 1:7][(df[, 1:7]) == "Multiple times a week" ] <- "At least once a week"
+df[, 1:7][(df[, 1:7]) == "Few times a week" ] <- "At least once a week"
+
+df[] <- lapply(df, factor, levels = c("Never", "Less than once a week", "At least once a week", "At least once a day", "N/A", "Not reported"))
+```
+
+```{r}
+#calculate the count of participants in each category
+c <- as.data.frame( sapply(X = df, FUN = table))
+c<- tibble::rownames_to_column(c, "Scale")
+
+colnames(c) <- c('Scale', 'Spouse', 'Siblings', "Parents", "Children over 13", "Friends", "Colleagues", "Strangers")
+
+
+#convert count to percentage
+for (i in 2:8) {
+  t <-nrow(df)
+  # print(t)
+  c[, i] <- 100 *( c[, i]/t)
+  c[, i] <- round(c[, i])
+}
+# print(c)
+
+#remove N/A and not reported rows from c 
+n<-dim(c)[1]
+c <- c[1:(n-2),]
+
+c$Scale <- factor(c$Scale, levels = c("Never", "Less than once a week", "At least once a week", "At least once a day", "N/A", "Not reported"), ordered = TRUE)
+```
+
+#### Plot for Figure 4a : Frequency of device sharing with various parties
+```{r}
+#prepare data for plotting 
+d <- melt(c, id.vars="Scale")
+d$Scale <- factor(d$Scale, levels = c("At least once a day", "At least once a week", "Less than once a week", "Never" ), ordered = TRUE)
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + 
+  geom_bar(stat='identity', position = 'dodge',width=0.8, color="black") +
+  labs(  y = "Percentage of Participants") + 
+  scale_y_continuous(breaks = seq(0,60, 10),expand = c(0,0))+ 
+  coord_cartesian(ylim = c(0, 60)) +  
+  theme(legend.title=element_blank(), legend.position = c("bottom"), 
+        legend.margin=margin(0,0,0,0),
+        legend.text = element_text(size = 17, margin = margin(r = 17.5)) ,
+        
+        legend.box.margin=margin(0,0,0,0), 
+        axis.text.x = element_text(color = "black", size =20, angle =0),
+        axis.title.x=element_blank(), 
+        axis.title.y = element_text(size = 24, angle = 90, margin = margin(r=12)),
+        axis.text.y=element_text(size=20), 
+        axis.line = element_line(), 
+        panel.background = element_rect(fill ="white"))  + 
+  scale_fill_brewer(palette="Dark2") + 
+  scale_x_discrete(labels = function(Scale) str_wrap(Scale, width = 13))
+plot(img)
+```
+```{r}
+#export data
+pdf(file="devicesharingpeople.pdf", width=10.7)
+plot(img)
+dev.off()
+```
+
+### Device Sharing Behaviour
+#### What all actions users take before handing their device to someone else?:- Figure 5
+```{r}
+df <- data %>% select(starts_with('share_'))
+df <- df %>% select(-c("share_spouse", "share_siblings", "share_parents", "share_children", "share_friends", "share_colleagues", "share_strangers", "share_reason", "share_other", "share_othertext") ) 
+
+head(df)
+```
+
+```{r}
+df[] <- lapply(df, factor)
+c <- df %>%  summarise_all(funs(sum(!is.na(.)))) # count of non-Na cells in each column
+colnames(c) <- c("Don't allow anyone else to use" ,"Nothing", "Close running applications", "Clear notifications", "Enable guest mode/second space", "Enable app locks", "Change accessibility settings", "Watch the person's use of the device", "Check all applications used by the person")
+
+#convert count to percentages
+t2<- nrow(df)
+c[, 1:9] <- 100 *( c[, 1:9]/t2)
+c <- round(c,2)
+
+c <- t(c) #take transpose 
+colnames(c) <- c("Per")
+c <- as.data.frame(c)
+c<- tibble::rownames_to_column(c, "Choices")
+
+#remove 'do nothing' and 'don't allow anyone to use' rows
+c <- c[-1,]
+c <- c[-1,]
+
+c$Per <- round(c$Per) #round off percentages
+c$Choices<- factor(c$Choices, levels = c("Check all applications used by the person","Enable guest mode/second space",  "Change accessibility settings","Watch the person's use of the device","Enable app locks", "Close running applications", "Clear notifications"))
+```
+```{r}
+img <- ggplot(c, aes(x = Choices, y=Per )) + geom_bar(width=0.4, stat="identity", fill = "cornflowerblue",color="black")+ labs( y = "Percentage of Participants")  +  theme(axis.text.y = element_text(color= "black", size = 24, angle = 0), axis.title.x=element_text(size=26, margin = margin(t=12)), axis.title.y = element_blank(), axis.text.x = element_text(color = "black", size = 24, angle =0)  , axis.line = element_line(), panel.background = element_rect(fill ="white"), panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + geom_text(aes(label = paste0(Per, "%")),hjust = -0.3, size= 8)+ scale_fill_brewer(palette="Accent")+  scale_y_continuous(breaks = seq(0,50, 10), expand = c(0,0))+  coord_flip(ylim = c(0, 51)) 
+plot(img)
+```
+```{r}
+#export
+pdf(file="presharingactions.pdf",  width = 15)
+plot(img)
+dev.off()
+```
+#### How frequently do you clear your notifications before handing your phone to someone else? Fig 6
+```{r}
+df <- data[ , c("clear_spouse", "clear_siblings", "clear_parents", "clear_children", "clear_friends", "clear_colleagues", "clear_strangers") ]
+sapply(df, class) # converts each column to factor
+df <- df%>% mutate_if(is.factor, as.character)
+df[, 1:7][is.na(df[, 1:7])] <- "do not clear notif"
+
+df[] <- lapply(df, factor, levels = c("Never", "Rarely", "Sometimes", "Always", "N/A", "do not clear notif")) 
+```
+#### Prepare data for Fig 6
+```{r}
+#Count of participants groups wise
+c <- as.data.frame( sapply(X = df, FUN = table))
+setnames(c, old = c("clear_spouse","clear_siblings", "clear_parents", "clear_children", "clear_friends", "clear_colleagues", "clear_strangers"), new = c('Spouse', 'Siblings', "Parents", "Children above 13", "Friends", "Colleagues", "Strangers"))
+c<- tibble::rownames_to_column(c, "Scale")
+
+c$Scale <- factor(c$Scale, levels = c("Never", "Rarely", "Sometimes", "Always", "N/A", "do not clear notif"), ordered = TRUE)
+class(c$Scale)
+
+#remove row of "Notclear notif" and N/A
+c <- c[-6, ]
+
+for (i in 2:8) {
+  t <- 80 #80 clear notifications before handing device over to someone else
+  c[, i] <- 100 *( c[, i]/t)
+  c[, i] <- round(c[, i], 2)
+}
+print(c)
+c <- c[-5, ] # remove NA before plotting
+c$Scale <- factor(c$Scale, levels = c("Never", "Rarely", "Sometimes", "Always"), ordered = TRUE)
+```
+
+#### Plot for Fig 6: Frequency of clearing notifications prior to handing over the device to various parties
+```{r}
+d <- melt(c, id.vars="Scale")
+
+img <- ggplot(d,  aes(Scale,value, fill=variable)) + geom_bar(width=0.8, stat='identity', position = 'dodge', color= "black") +  
+  labs(  y = "Percentage of Participants") + coord_cartesian(ylim = c(0, 45))+ scale_y_continuous(expand = c(0,0)) +
+  theme(legend.position = c("bottom") , legend.title = element_blank(), legend.text = element_text(size = 20,margin = margin(r = 33)), axis.text.x = element_text(color= "black", size = 20, angle = 0), axis.title.x=element_blank(), axis.title.y = element_text(size = 22, angle = 90,margin = margin(r=12)), axis.text.y=element_text(size=20),  axis.line = element_line(), panel.background = element_rect(fill ="white"))  + scale_fill_brewer(palette="Accent") 
+
+plot(img)
+```
+```{r}
+#export image
+pdf(file="clearnotifications.pdf", width = 11)
+plot(img)
+dev.off()
+```
+
+
+
+
+### Digital Difficulties
+
+```{r}
+df <- data[ , c("gdd_1", "gdd_2" , "gdd_3", "gdd_4", "gdd_5", "negativeexperiences" )]
+sapply(df, class)#converts each column of data frame to factor
+df <- df%>% mutate_if(is.factor, as.character)
+
+#remove NA values from all columns
+df[, 1:6][is.na(df[, 1:6])] <- "N/A"
+df <- df[ df$gdd_1!= "N/A" , ]
+df <- df[ df$gdd_2!= "N/A" , ]
+df <- df[ df$gdd_3!= "N/A" , ]
+df <- df[ df$gdd_4!= "N/A" , ]
+df <- df[ df$gdd_5!= "N/A" , ]
+df$negativeexperiences <- as.character(df$negativeexperiences)
+df <- df[(df$negativeexperiences )!= "N/A", ]
+df <- df[! is.na(df$negativeexperiences ), ]
+```
+
+```{r}
+# Convert to Ordered Factors
+df$gdd_1 <- factor(df$gdd_1, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$gdd_2 <- factor(df$gdd_2, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$gdd_3 <- factor(df$gdd_3, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$gdd_4 <- factor(df$gdd_4, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+df$gdd_5 <- factor(df$gdd_5, levels = c("Disagree", "Rather disagree", "Neither disagree, neither agree", "Rather agree", "Agree"), ordered = TRUE)
+```
+
+#### Table 6: Digital difficulties score grouped by instances of negative experiences due to smartphone notifications.
+```{r}
+df <- df %>% mutate_if(is.factor, as.numeric)
+df$negativeexperiences <- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE  ))
+df <- df %>% mutate(DigitalDisadvantageScore = rowSums(.[1:5]) ) # calculate the score by adding first 5 columns
+
+#divide by 5 to take the average of each participant
+df$DigitalDisadvantageScore <- df$DigitalDisadvantageScore/5
+
+# Higher scores indicate greater digital difficulties, i.e., lower technical proficiency
+df %>% group_by(df$negativeexperiences) %>% summarise(Mean_DigitalDisadvantageScore = round(mean(DigitalDisadvantageScore, na.rm = TRUE),2),  median_DigitalDisadvantageScore = median(DigitalDisadvantageScore, na.rm = TRUE),  sd = round(sd(DigitalDisadvantageScore, na.rm = TRUE), 2))
+```
+
+
+
+
+
+
+
+
+
+
+### Analysing MUIPC score
+```{r}
+df <- data[  , c("muipc_location","muipc_collectinfo" ,"muipc_monitor" ,"muipc_othersknow" ,"muipc_privateinfo" ,"muipc_privacyinvasion", "negativeexperiences")]
+```
+
+```{r}
+#filter out NA values
+df[, 1:6][is.na(df[, 1:6])] <- "N/A"
+
+df <- df[ df$muipc_location!= "N/A" , ]
+df <- df[ df$muipc_collectinfo!= "N/A" , ]
+df <- df[ df$muipc_monitor!= "N/A" , ]
+df <- df[ df$muipc_othersknow!= "N/A" , ]
+df <- df[ df$muipc_privateinfo!= "N/A" , ]
+df <- df[ df$muipc_privacyinvasion!= "N/A" , ]
+
+df$negativeexperiences <- as.character(df$negativeexperiences)
+df <- df[(df$negativeexperiences )!= "N/A", ]
+df <- df[! is.na(df$negativeexperiences ), ]
+
+#Factor the columns
+df$muipc_location <- factor(df$muipc_location, levels = c("Strongly disagree", "Disagree", "Somewhat disagree", "Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df$muipc_collectinfo <- factor(df$muipc_collectinfo, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree", "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df$muipc_monitor <- factor(df$muipc_monitor, levels = c("Strongly disagree","Disagree", "Somewhat disagree","Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+df$muipc_othersknow <- factor(df$muipc_othersknow, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree","Somewhat agree",  "Agree",  "Strongly agree"), ordered = TRUE)
+df$muipc_privateinfo <- factor(df$muipc_privateinfo, levels = c("Strongly disagree", "Disagree","Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree","Agree", "Strongly agree"), ordered = TRUE)
+df$muipc_privacyinvasion <- factor(df$muipc_privacyinvasion, levels = c("Strongly disagree","Disagree", "Somewhat disagree", "Neither agree nor disagree",  "Somewhat agree", "Agree", "Strongly agree"), ordered = TRUE)
+```
+
+#### Data for Table 3: Shows mean scores of 'Perceived Intrusion' and 'Perceived Surveillance' subscales from the MUIPC scale for participants grouped by reported `Instances of Negative Experiences'
+```{r}
+df <- df %>% mutate_if(is.factor, as.numeric)
+df$negativeexperiences <- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE  ))
+
+#Find the score values for each users
+df <- df %>% mutate(survelScore = rowSums(.[1:3]) )
+df <- df %>% mutate(intrusionScore = rowSums(.[4:6]) )
+
+## divide by 3 in each col
+df$survelScore <- df$survelScore/3 
+df$intrusionScore <- df$intrusionScore/3
+
+#group the score by the number of negative experiences 
+mean_df_surv <- df %>%  group_by(df$negativeexperiences) %>% summarise(mean_SurvelScore = round( mean(survelScore, na.rm = TRUE), 2))
+mean_df_intr <- df %>%  group_by(df$negativeexperiences) %>% summarise(mean_intrusionScore = round( mean(intrusionScore, na.rm = TRUE),2))
+```
+
+#### correlation
+```{r}
+df <- df %>% mutate_if(is.factor, as.numeric)
+t <- cor.test(df$negativeexperiences, df$intrusionScore, method = "spearman",exact=FALSE)
+t
+
+t <- cor.test(df$negativeexperiences, df$survelScore, method = "spearman",exact=FALSE)
+t
+```
+
+
+
+
+### Smartphone Features
+```{r}
+df <- data[,c("dnd", "silent", "turnoff", "airplane", "notificationapps")]
+head(df) #use of features to control the smartphone state
+```
+
+#### usage analysis of different features 
+```{r}
+ # DND Mode
+tab_count <- table(df$dnd, useNA = c("always"))
+tab_per <- 100*prop.table(table((df$dnd), useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])#percentage of users who don't use DND mode i.e. use of 0 hours in a typical day
+print(tab_per[16]) # NA values
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]] -tab_per[16] , nrow(df)- tab_count[["0"]]-tab_count[16] )
+#total - those who use for 0 hours - those who did not report
+```
+
+```{r}
+ # Silent Mode
+tab_count <- table(df$silent,useNA = c("always"))
+tab_per <-  100*prop.table(table((df$silent),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[22])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[22], nrow(df)-tab_count[["0"]]-tab_count[22] )
+#total - those who use for 0 hours - those who did not report
+```
+
+```{r}
+ # Turn off
+tab_count <- table(df$turnoff,useNA = c("always"))
+tab_per <-  100*prop.table(table((df$turnoff),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[17])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[17], nrow(df)-tab_count[["0"]]-tab_count[17] )
+```
+
+```{r}
+ # Airplane Mode
+tab_count <- table(df$airplane,useNA = c("always"))
+tab_per <-  100*prop.table(table((df$airplane),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[19])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[19], nrow(df)-tab_count[["0"]]-tab_count[19] )
+```
+
+```{r}
+ # Notification Managemnet Apps
+tab_count <- table(df$notificationapps,useNA = c("always"))
+tab_per <-  100*prop.table(table((df$notificationapps),useNA = c("always")))
+print(tab_per)
+print(tab_per[["0"]])
+print(tab_per[23])
+sprintf("atleast once %f percent N = %d", 100 - tab_per[["0"]]-tab_per[23], nrow(df)-tab_count[["0"]]-tab_count[23])
+```
+
+#### Compare features use with Negative Experiences
+```{r}
+df <- data
+df <- df[  , c("dnd","silent" , "turnoff" , "airplane" ,"notificationapps" ,"negativeexperiences")]
+
+df$negativeexperiences<- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE))
+
+#remove NAs
+df$negativeexperiences <- as.character(df$negativeexperiences)
+df <- df[(df$negativeexperiences )!= "NA", ]
+df <- df[! is.na(df$negativeexperiences ), ]
+df <- df[! is.na(df$dnd ), ]
+df <- df[! is.na(df$silent ), ]
+df <- df[! is.na(df$turnoff ), ]
+df <- df[! is.na(df$airplane ), ]
+df <- df[! is.na(df$notificationapps ), ]
+
+```
+
+#### mean use of each mode for TABLE 4
+```{r}
+df <- df %>% mutate_if(is.factor, as.numeric)
+summary(df) # calculate the mean use of each mode for TABLE 4
+df$negativeexperiences<- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE))
+```
+
+#### Mean use grouped by Instances of Negative Experiences
+```{r}
+# DND
+df %>%  group_by(df$negativeexperiences) %>% summarise(mean_DND = round(mean(dnd, na.rm = TRUE), 2), median_DND = median(dnd, na.rm = TRUE), sd_DND = sd(dnd, na.rm = TRUE))
+```
+
+```{r}
+#silent mode
+df %>%  group_by(df$negativeexperiences) %>% summarise(mean = round( mean(silent, na.rm = TRUE),2), median = median(silent, na.rm = TRUE), sd = sd(silent, na.rm = TRUE))
+```
+
+```{r}
+#turn off device
+df %>%  group_by(df$negativeexperiences) %>% summarise(mean = round(mean(turnoff, na.rm = TRUE),2), median = median(turnoff, na.rm = TRUE), sd = sd(turnoff, na.rm = TRUE))
+```
+
+```{r}
+#airplane mode
+df %>%  group_by(df$negativeexperiences) %>% summarise(mean = round( mean(airplane, na.rm = TRUE),2), median = median(airplane, na.rm = TRUE), sd = sd(airplane, na.rm = TRUE))
+```
+
+```{r}
+#notification mgmt apps
+df %>%  group_by(df$negativeexperiences) %>% summarise(mean = round(mean(notificationapps, na.rm = TRUE),2), median = median(notificationapps, na.rm = TRUE), sd = sd(notificationapps, na.rm = TRUE))
+```
+
+#### Correlation tests: TABLE 4
+```{r}
+df <- df %>% mutate_if(is.factor, as.numeric)
+
+t <- cor.test(df$negativeexperiences, df$dnd, method = "spearman",exact=FALSE)
+t
+pvals <- c(t$p.value)
+
+t <- cor.test(df$negativeexperiences, df$silent, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df$negativeexperiences, df$turnoff, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df$negativeexperiences, df$airplane, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+t <- cor.test(df$negativeexperiences, df$notificationapps, method = "spearman",exact=FALSE)
+t
+pvals <- append(pvals, t$p.value)
+
+print(pvals)
+adj_pvals <- pvals*5
+print(adj_pvals)
+```
+
+```{r}
+# df$negativeexperiences<- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20", ordered= TRUE))
+# df <- df %>% mutate_if(is.factor, as.numeric)
+str(df)
+#normality tests
+shapiro.test(df$dnd)
+shapiro.test(df$silent)
+shapiro.test(df$turnoff)
+shapiro.test(df$airplane)
+shapiro.test(df$notificationapps)
+shapiro.test(df$negativeexperiences)
+#p-values << 0.05 => all of them are non-normal distributions
+```
+
+#### Kruskal wallis test
+```{r}
+result = kruskal.test(negativeexperiences ~  dnd  ,   data = df) 
+print(result)
+pvals <- c(result$p.value)
+
+result = kruskal.test(negativeexperiences ~  silent  ,   data = df) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(negativeexperiences ~  turnoff  ,   data = df) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(negativeexperiences ~  airplane  ,   data = df) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+result = kruskal.test(negativeexperiences ~  notificationapps  ,   data = df) 
+print(result)
+pvals <- append(pvals, result$p.value)
+
+print(pvals)
+adj_pvals <- pvals*5
+print(adj_pvals)
+```
+
+
+### Differences due to operating System 
+```{r}
+df <- data[, c("phoneos", "negativeexperiences")]
+head(df)
+```
+
+```{r}
+### to remove NAs first convert factors!
+df <- df %>% mutate_if(is.factor, as.character)
+df <- df[!is.na(df$negativeexperiences) , ]
+df <- df[df$negativeexperiences != "NA" , ]
+
+### convert back to factor for analysis
+df$negativeexperiences <- factor(df$negativeexperiences, levels = c("0", "1-2", "3-5", "6-10", "11-20", "More than 20"), ordered = TRUE)
+df$phoneos <- factor(df$phoneos, levels= c("Android", "iOS (iPhone)"))
+summary(df)
+```
+#### Mann Whitney U Test
+```{r}
+ df$negativeexperiences <- as.numeric(df$negativeexperiences)
+unique(df$negativeexperiences)
+res <- wilcox.test(negativeexperiences ~phoneos,  data = df, paired= FALSE )
+
+w <-  166 * 38 /2
+print(res)
+print(w)
+```
+- p-value : significance value used to determine if null hypothesis should be rejected (i.e. p <0.05 -> reject  Null hypothesis)
+the medians are not all that far from one another: look at the value of the U-statistic we can see it is reasonably close to w (n1*n2/2).
+- Failed to reject null hypothesis -> ditributions are identical. [Source](https://miningthedetails.com/blog/r/non-parametric-tests/)
+
+
